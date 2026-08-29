@@ -64,9 +64,16 @@ function App() {
   const [expenseItems, setExpenseItems] = useState(savedPlan.expenseItems || defaultExpenses);
   const [showHoldingForm, setShowHoldingForm] = useState(false);
   const [toast, setToast] = useState('');
+  const [incomeCadence, setIncomeCadence] = useState('Monthly');
   const totalValue = portfolio.reduce((sum, item) => sum + item.value, 0);
   const annualIncome = portfolio.reduce((sum, item) => sum + item.income, 0);
   const monthlyIncome = annualIncome / 12;
+  const incomeView = {
+    Monthly: { income: monthlyIncome, goal, suffix: 'mo' },
+    Weekly: { income: annualIncome / 52, goal: goal * 12 / 52, suffix: 'wk' },
+    Daily: { income: annualIncome / 365, goal: goal * 12 / 365, suffix: 'day' },
+    Yearly: { income: annualIncome, goal: goal * 12, suffix: 'yr' },
+  }[incomeCadence];
   const expenses = expenseItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
   const coverage = Math.min(100, Math.round((monthlyIncome / expenses) * 100));
   const overallYield = totalValue ? annualIncome / totalValue * 100 : 0;
@@ -91,7 +98,7 @@ function App() {
     <main>
       <header><div><p className="eyebrow">{active === 'Overview' ? 'WELCOME, GUEST' : active.toUpperCase()}</p><h1>{active === 'Overview' ? 'Your income, at a glance.' : active}</h1></div><div className="header-actions"><button className="icon-button"><CircleHelp size={20}/></button><button className="icon-button notification"><Bell size={20}/><i/></button><button className="primary" onClick={() => setShowPlanner(true)}><Plus size={18}/>Build income plan</button></div></header>
       {active === 'Overview' && <><section className="hero-grid">
-        <div className="income-card"><div className="card-label">MONTHLY PASSIVE INCOME <CircleHelp size={15}/></div><div className="income-top"><div><div className="big-number">${monthlyIncome.toFixed(0)}<small>/mo</small></div><p><span className="up">↑ 4.8%</span> vs. last month</p></div><div className="spark"><svg viewBox="0 0 130 55" preserveAspectRatio="none"><path d="M0 45 C12 38 18 43 28 31 S45 36 55 26 S69 33 78 19 S95 24 105 12 S118 19 130 3" fill="none" stroke="currentColor" strokeWidth="3"/></svg></div></div><div className="goal-line"><span>Income goal</span><strong>${goal.toLocaleString()} /mo</strong></div><div className="progress"><span style={{width: `${goalProgress}%`}}/></div><p className="muted">You’re {goalProgress.toFixed(0)}% of the way there. Keep building.</p></div>
+        <div className="income-card"><div className="income-card-header"><div className="card-label">{incomeCadence.toUpperCase()} PASSIVE INCOME <CircleHelp size={15}/></div><select aria-label="Income timeframe" value={incomeCadence} onChange={event=>setIncomeCadence(event.target.value)}>{['Monthly','Weekly','Daily','Yearly'].map(period=><option key={period}>{period}</option>)}</select></div><div className="income-top"><div><div className="big-number">${incomeView.income.toFixed(0)}<small>/{incomeView.suffix}</small></div><p><span className="up">↑ 4.8%</span> vs. last period</p></div><div className="spark"><svg viewBox="0 0 130 55" preserveAspectRatio="none"><path d="M0 45 C12 38 18 43 28 31 S45 36 55 26 S69 33 78 19 S95 24 105 12 S118 19 130 3" fill="none" stroke="currentColor" strokeWidth="3"/></svg></div></div><div className="goal-line"><span>{incomeCadence} goal</span><strong>${incomeView.goal.toLocaleString(undefined, { maximumFractionDigits: 0 })} /{incomeView.suffix}</strong></div><div className="progress"><span style={{width: `${goalProgress}%`}}/></div><p className="muted">You’re {goalProgress.toFixed(0)}% of the way there. Keep building.</p></div>
         <div className="coverage-card"><div className="card-label">EXPENSE COVERAGE</div><div className="coverage-body"><div className="donut" style={{'--percent': `${coverage * 3.6}deg`}}><div><b>{coverage}%</b><span>covered</span></div></div><div><h3>${monthlyIncome.toFixed(0)} <span>of ${expenses.toLocaleString()}</span></h3><p>Your portfolio covers {coverage}% of monthly spending.</p><button className="text-button" onClick={() => setActive('Income plan')}>View expenses →</button></div></div></div>
       </section>
       <section className="two-col">

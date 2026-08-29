@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Bell, ChevronDown, CircleHelp, Compass, LayoutDashboard, Plus, Search, Settings, SlidersHorizontal, TrendingUp, Wallet, X } from 'lucide-react';
 import './styles.css';
@@ -17,11 +17,18 @@ const recommendations = [
 
 function DiscoverCards({ filter, setFilter, addHolding }) {
   const visible = recommendations.filter(r => filter === 'All' || (filter === 'High yield' && r.tag === 'High income') || (filter === 'Growth' && r.tag === 'Dividend growth') || (filter === 'Sectors' && r.tag === 'Healthcare'));
-  return <section className="panel recommendations"><div className="panel-heading"><div><h2>Discover your next income investment</h2><p>Hand-picked to match your plan and preferences</p></div><div className="filter-group">{['All','High yield','Growth','Sectors'].map(f=><button key={f} className={filter===f?'selected':''} onClick={()=>setFilter(f)}>{f}</button>)}</div></div><div className="rec-grid">{visible.map(r=><article className="rec" key={r.symbol}><div className="rec-head"><div className="ticker" style={{background:r.color}}>{r.symbol.slice(0,2)}</div><button className="icon-button" onClick={addHolding}><Plus size={17}/></button></div><h3>{r.symbol}</h3><p>{r.name}</p><span className="tag">{r.tag}</span><div className="rec-stats"><div><span>Dividend yield</span><b>{r.yield}</b></div><div><span>5y div. growth</span><b>{r.growth}</b></div></div><button className="add-button" onClick={addHolding}>Add to simulation</button></article>)}</div></section>
+  return <section className="panel recommendations"><div className="panel-heading"><div><h2>Discover your next income investment</h2><p>Hand-picked to match your plan and preferences</p></div><div className="filter-group">{['All','High yield','Growth','Sectors'].map(f=><button key={f} className={filter===f?'selected':''} onClick={()=>setFilter(f)}>{f}</button>)}</div></div><div className="rec-grid">{visible.map(r=><article className="rec" key={r.symbol}><div className="rec-head"><div className="ticker" style={{background:r.color}}>{r.symbol.slice(0,2)}</div><button className="icon-button" onClick={()=>addHolding(r)}><Plus size={17}/></button></div><h3>{r.symbol}</h3><p>{r.name}</p><span className="tag">{r.tag}</span><div className="rec-stats"><div><span>Dividend yield</span><b>{r.yield}</b></div><div><span>5y div. growth</span><b>{r.growth}</b></div></div><button className="add-button" onClick={()=>addHolding(r)}>Add to simulation</button></article>)}</div></section>
 }
 
-function PortfolioScreen({ portfolio, totalValue, annualIncome, overallYield, removeHolding, addHolding }) {
-  return <div className="screen-stack"><section className="stats-grid">{[['Portfolio value', `$${totalValue.toLocaleString()}`], ['Annual income', `$${annualIncome.toFixed(0)}`], ['Blended yield', `${overallYield.toFixed(2)}%`], ['Holdings', portfolio.length]].map(([label,value])=><div className="mini-stat" key={label}><span>{label}</span><b>{value}</b></div>)}</section><section className="panel holdings-panel"><div className="panel-heading"><div><h2>Income portfolio</h2><p>Model how each holding changes your income engine</p></div><button className="primary" onClick={addHolding}><Plus size={16}/>Add holding</button></div><div className="holdings-table"><div className="holding-row heading"><span>Investment</span><span>Market value</span><span>Yield</span><span>Annual income</span><span/></div>{portfolio.map(h=><div className="holding-row" key={h.symbol}><div className="investment"><div className="ticker" style={{background:h.color}}>{h.symbol.slice(0,2)}</div><span><b>{h.symbol}</b><em>{h.name}</em></span></div><span>${h.value.toLocaleString()}</span><span>{h.yield}%</span><strong>${h.income.toFixed(0)}</strong><button className="remove" onClick={()=>removeHolding(h.symbol)}>Remove</button></div>)}</div></section></div>
+function PortfolioScreen({ portfolio, totalValue, annualIncome, overallYield, removeHolding, openHoldingForm }) {
+  return <div className="screen-stack"><section className="stats-grid">{[['Portfolio value', `$${totalValue.toLocaleString()}`], ['Annual income', `$${annualIncome.toFixed(0)}`], ['Blended yield', `${overallYield.toFixed(2)}%`], ['Holdings', portfolio.length]].map(([label,value])=><div className="mini-stat" key={label}><span>{label}</span><b>{value}</b></div>)}</section><section className="panel holdings-panel"><div className="panel-heading"><div><h2>Income portfolio</h2><p>Model how each holding changes your income engine</p></div><button className="primary" onClick={openHoldingForm}><Plus size={16}/>Add holding</button></div><div className="holdings-table"><div className="holding-row heading"><span>Investment</span><span>Market value</span><span>Yield</span><span>Annual income</span><span/></div>{portfolio.map(h=><div className="holding-row" key={h.symbol}><div className="investment"><div className="ticker" style={{background:h.color}}>{h.symbol.slice(0,2)}</div><span><b>{h.symbol}</b><em>{h.name}</em></span></div><span>${h.value.toLocaleString()}</span><span>{h.yield}%</span><strong>${h.income.toFixed(0)}</strong><button className="remove" onClick={()=>removeHolding(h.symbol)}>Remove</button></div>)}</div></section></div>
+}
+
+function HoldingModal({ onClose, onSave }) {
+  const [draft, setDraft] = useState({ symbol: '', name: '', value: 2500, yield: 4 });
+  const change = key => event => setDraft(current => ({ ...current, [key]: event.target.value }));
+  const submit = event => { event.preventDefault(); onSave({ ...draft, symbol: draft.symbol.toUpperCase(), value: Number(draft.value), yield: Number(draft.yield) }); };
+  return <div className="modal-backdrop"><form className="modal holding-modal" onSubmit={submit}><button type="button" className="close" onClick={onClose}><X/></button><p className="eyebrow">PORTFOLIO SIMULATION</p><h2>Add a holding</h2><p className="modal-intro">Use an estimated market value and annual dividend yield to model its income impact.</p><div className="field-grid"><label>Symbol<input required maxLength="8" placeholder="e.g. SCHD" value={draft.symbol} onChange={change('symbol')}/></label><label>Annual yield<input required type="number" min="0" step="0.01" value={draft.yield} onChange={change('yield')}/></label></div><label>Investment name<input required placeholder="e.g. Schwab U.S. Dividend Equity ETF" value={draft.name} onChange={change('name')}/></label><label>Market value <div className="input-prefix"><span>$</span><input required type="number" min="0" value={draft.value} onChange={change('value')}/></div></label><div className="income-preview"><span>Estimated annual income</span><b>${(Number(draft.value || 0) * Number(draft.yield || 0) / 100).toFixed(2)}</b></div><button className="primary full" type="submit">Add to portfolio</button></form></div>
 }
 
 function IncomePlanScreen({ goal, setGoal, monthly, setMonthly, risk, setRisk, expenses, setExpenses, coverage, monthlyIncome }) {
@@ -37,13 +44,15 @@ function IncomePlanScreen({ goal, setGoal, monthly, setMonthly, risk, setRisk, e
 
 function App() {
   const [active, setActive] = useState('Overview');
-  const [goal, setGoal] = useState(1200);
-  const [monthly, setMonthly] = useState(850);
-  const [risk, setRisk] = useState('Balanced');
+  const savedPlan = (() => { try { return JSON.parse(localStorage.getItem('divrion-plan')) || {}; } catch { return {}; } })();
+  const [goal, setGoal] = useState(savedPlan.goal || 1200);
+  const [monthly, setMonthly] = useState(savedPlan.monthly || 850);
+  const [risk, setRisk] = useState(savedPlan.risk || 'Balanced');
   const [filter, setFilter] = useState('All');
   const [showPlanner, setShowPlanner] = useState(false);
-  const [portfolio, setPortfolio] = useState(holdings);
-  const [expenses, setExpenses] = useState(2100);
+  const [portfolio, setPortfolio] = useState(() => { try { return JSON.parse(localStorage.getItem('divrion-portfolio')) || holdings; } catch { return holdings; } });
+  const [expenses, setExpenses] = useState(savedPlan.expenses || 2100);
+  const [showHoldingForm, setShowHoldingForm] = useState(false);
   const totalValue = portfolio.reduce((sum, item) => sum + item.value, 0);
   const annualIncome = portfolio.reduce((sum, item) => sum + item.income, 0);
   const monthlyIncome = annualIncome / 12;
@@ -52,7 +61,10 @@ function App() {
   const allocation = portfolio.map(h => ({ ...h, share: h.value / totalValue * 100 }));
   const goalProgress = Math.min(100, monthlyIncome / goal * 100);
   const removeHolding = symbol => setPortfolio(p => p.filter(h => h.symbol !== symbol));
-  const addHolding = () => setPortfolio(p => [...p, { symbol: 'HDV', name: 'iShares Core High Dividend', value: 4000, yield: 3.48, income: 139.2, color: '#ef789a' }]);
+  useEffect(() => localStorage.setItem('divrion-portfolio', JSON.stringify(portfolio)), [portfolio]);
+  useEffect(() => localStorage.setItem('divrion-plan', JSON.stringify({ goal, monthly, risk, expenses })), [goal, monthly, risk, expenses]);
+  const addHolding = holding => setPortfolio(p => p.some(h => h.symbol === holding.symbol) ? p : [...p, { ...holding, income: holding.value * holding.yield / 100, color: holding.color || '#ef789a' }]);
+  const addRecommendation = r => addHolding({ symbol: r.symbol, name: r.name, value: 2500, yield: Number.parseFloat(r.yield), color: r.color });
 
   return <div className="app-shell">
     <aside className="sidebar">
@@ -72,14 +84,15 @@ function App() {
         <div className="panel allocation-panel"><div className="panel-heading"><div><h2>Portfolio allocation</h2><p>How your income portfolio is working</p></div><button className="ghost" onClick={() => setActive('Portfolio')}>View portfolio</button></div><div className="allocation-content"><div className="allocation-donut" style={{background: `conic-gradient(${allocation.map((a, i) => `${a.color} ${allocation.slice(0,i).reduce((s,x)=>s+x.share,0)}% ${allocation.slice(0,i+1).reduce((s,x)=>s+x.share,0)}%`).join(',')})`}}><div><strong>${(totalValue/1000).toFixed(1)}k</strong><span>invested</span></div></div><div className="legend">{allocation.map(x => <div key={x.symbol}><i style={{background:x.color}}/><span>{x.symbol}</span><b>{x.share.toFixed(0)}%</b></div>)}</div></div></div>
         <div className="panel activity"><div className="panel-heading"><div><h2>Income activity</h2><p>Recent dividends and distributions</p></div><button className="ghost">See all</button></div>{portfolio.slice(0,3).map((h,i)=><div className="activity-row" key={h.symbol}><div className="ticker" style={{background:h.color}}>{h.symbol.slice(0,2)}</div><div><strong>{h.symbol} dividend</strong><span>{i===0?'Today':i===1?'Aug 26':'Aug 22'}</span></div><b>+${(h.income/4).toFixed(2)}</b></div>)}</div>
       </section>
-      <DiscoverCards filter={filter} setFilter={setFilter} addHolding={addHolding}/>
+      <DiscoverCards filter={filter} setFilter={setFilter} addHolding={addRecommendation}/>
       <section className="panel goal-panel"><div><p className="eyebrow">YOUR NEXT MILESTONE</p><h2>Cover 50% of your monthly expenses</h2><p>At your current pace, you could get there by <strong>February 2028.</strong></p></div><button className="primary" onClick={()=>setShowPlanner(true)}>Explore plan <TrendingUp size={17}/></button></section>
       </>}
-      {active === 'Portfolio' && <PortfolioScreen portfolio={portfolio} totalValue={totalValue} annualIncome={annualIncome} overallYield={overallYield} removeHolding={removeHolding} addHolding={addHolding}/>} 
+      {active === 'Portfolio' && <PortfolioScreen portfolio={portfolio} totalValue={totalValue} annualIncome={annualIncome} overallYield={overallYield} removeHolding={removeHolding} openHoldingForm={()=>setShowHoldingForm(true)}/>} 
       {active === 'Income plan' && <IncomePlanScreen goal={goal} setGoal={setGoal} monthly={monthly} setMonthly={setMonthly} risk={risk} setRisk={setRisk} expenses={expenses} setExpenses={setExpenses} coverage={coverage} monthlyIncome={monthlyIncome}/>} 
-      {active === 'Discover' && <DiscoverCards filter={filter} setFilter={setFilter} addHolding={addHolding}/>} 
+      {active === 'Discover' && <DiscoverCards filter={filter} setFilter={setFilter} addHolding={addRecommendation}/>} 
     </main>
     {showPlanner && <div className="modal-backdrop"><div className="modal"><button className="close" onClick={()=>setShowPlanner(false)}><X/></button><p className="eyebrow">INCOME PLAN</p><h2>Design your income engine</h2><p className="modal-intro">Tune the inputs and we’ll shape a portfolio path toward your goal.</p><label>Monthly passive-income goal <div className="input-prefix"><span>$</span><input type="number" value={goal} onChange={e=>setGoal(Number(e.target.value))}/><em>/ month</em></div></label><label>Monthly contribution <div className="input-prefix"><span>$</span><input type="number" value={monthly} onChange={e=>setMonthly(Number(e.target.value))}/><em>/ month</em></div></label><label>Risk preference <div className="risk-options">{['Conservative','Balanced','Growth'].map(x=><button key={x} className={risk===x?'selected':''} onClick={()=>setRisk(x)}>{x}</button>)}</div></label><div className="plan-result"><span>Suggested target yield</span><b>{risk==='Conservative'?'3.2%':risk==='Balanced'?'4.1%':'4.8%'}</b><span>Estimated time to goal</span><b>{risk==='Conservative'?'5 years':'3 years, 8 months'}</b></div><button className="primary full" onClick={()=>setShowPlanner(false)}>Save income plan</button></div></div>}
+    {showHoldingForm && <HoldingModal onClose={()=>setShowHoldingForm(false)} onSave={holding=>{ addHolding(holding); setShowHoldingForm(false); }}/>} 
   </div>
 }
 createRoot(document.getElementById('root')).render(<App/>);

@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
 
-:root { font-family: Manrope, sans-serif; color: #f2f1ed; background: #16171d; font-synthesis: none; }
+:root { font-family: 'DM Sans', sans-serif; color: #f2f1ed; background: #16171d; font-synthesis: none; }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
 button, input { font: inherit; }
@@ -32,3 +32,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 @media (max-width: 760px) { .stats-grid,.plan-layout { grid-template-columns:1fr 1fr; }.holding-row { grid-template-columns:1.4fr 1fr auto; }.holding-row>span:nth-child(3),.holding-row>strong { display:none; }.holding-row.heading>span:nth-child(3),.holding-row.heading>span:nth-child(4) { display:none; }.plan-hero { padding:22px; }.plan-hero h2 { font-size:21px; }.plan-figure { width:82px; height:82px; }.forecast-chart { gap:8px; margin-inline:0; }.forecast-value { font-size:8px; }.forecast-bar-wrap { height:130px; }.forecast-column>span { font-size:8px; } }
 @media (max-width: 760px) { .discovery-controls { grid-template-columns:1fr 1fr; }.discovery-controls p { grid-column:1/-1; padding:0; text-align:left; } }
 @media (max-width: 400px) { .header-actions .primary svg { display:none; }.big-number { font-size:35px; }.spark { width:90px; }.coverage-body { gap:12px; }.donut { width:95px;height:95px; }.donut>div { width:67px;height:67px; }.allocation-content { flex-direction:column; }.allocation-donut { width:130px;height:130px; }.legend { width:100%; } }
+
+/* A single, highly legible typeface for all interface and display text. */
+.brand,.brand-mark,h1,h2,h3,.big-number,.donut b,.coverage-body h3,.allocation-donut strong,.rec h3,.mini-stat b,.plan-figure b,.coverage-summary b,.empty-state h3,.discover-empty h3 { font-family:'DM Sans',sans-serif !important; }
+.big-number,h1 { letter-spacing:-1.1px; }

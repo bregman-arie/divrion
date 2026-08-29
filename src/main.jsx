@@ -10,9 +10,9 @@ const holdings = [
   { symbol: 'DGRO', name: 'iShares Core Dividend Growth', value: 6500, yield: 2.24, income: 145.60, color: '#4d9df2' },
 ];
 const recommendations = [
-  { symbol: 'VIG', name: 'Vanguard Dividend Appreciation', yield: '1.7%', growth: '10.2%', tag: 'Dividend growth', color: '#7a67fa' },
-  { symbol: 'JEPI', name: 'JPMorgan Equity Premium Income', yield: '7.8%', growth: '4.1%', tag: 'High income', color: '#d18bff' },
-  { symbol: 'XLV', name: 'Health Care Select Sector', yield: '1.4%', growth: '8.6%', tag: 'Healthcare', color: '#43c6a1' },
+  { symbol: 'VIG', name: 'Vanguard Dividend Appreciation', yield: '1.7%', growth: '10.2%', tag: 'Dividend growth', sector: 'Broad market', color: '#7a67fa' },
+  { symbol: 'JEPI', name: 'JPMorgan Equity Premium Income', yield: '7.8%', growth: '4.1%', tag: 'High income', sector: 'Broad market', color: '#d18bff' },
+  { symbol: 'XLV', name: 'Health Care Select Sector', yield: '1.4%', growth: '8.6%', tag: 'Healthcare', sector: 'Healthcare', color: '#43c6a1' },
 ];
 const defaultExpenses = [
   { id: 'home', label: 'Housing', amount: 1050 },
@@ -20,9 +20,11 @@ const defaultExpenses = [
   { id: 'transport', label: 'Transport', amount: 400 },
 ];
 
-function DiscoverCards({ filter, setFilter, addHolding }) {
-  const visible = recommendations.filter(r => filter === 'All' || (filter === 'High yield' && r.tag === 'High income') || (filter === 'Growth' && r.tag === 'Dividend growth') || (filter === 'Sectors' && r.tag === 'Healthcare'));
-  return <section className="panel recommendations"><div className="panel-heading"><div><h2>Discover your next income investment</h2><p>Hand-picked to match your plan and preferences</p></div><div className="filter-group">{['All','High yield','Growth','Sectors'].map(f=><button key={f} className={filter===f?'selected':''} onClick={()=>setFilter(f)}>{f}</button>)}</div></div><div className="rec-grid">{visible.map(r=><article className="rec" key={r.symbol}><div className="rec-head"><div className="ticker" style={{background:r.color}}>{r.symbol.slice(0,2)}</div><button className="icon-button" onClick={()=>addHolding(r)}><Plus size={17}/></button></div><h3>{r.symbol}</h3><p>{r.name}</p><span className="tag">{r.tag}</span><div className="rec-stats"><div><span>Dividend yield</span><b>{r.yield}</b></div><div><span>5y div. growth</span><b>{r.growth}</b></div></div><button className="add-button" onClick={()=>addHolding(r)}>Add to simulation</button></article>)}</div></section>
+function DiscoverCards({ filter, setFilter, addHolding, full = false }) {
+  const [minimumYield, setMinimumYield] = useState(0);
+  const [sector, setSector] = useState('Any sector');
+  const visible = recommendations.filter(r => (filter === 'All' || (filter === 'High yield' && r.tag === 'High income') || (filter === 'Growth' && r.tag === 'Dividend growth') || (filter === 'Sectors' && r.tag === 'Healthcare')) && Number.parseFloat(r.yield) >= minimumYield && (sector === 'Any sector' || r.sector === sector));
+  return <section className="panel recommendations"><div className="panel-heading"><div><h2>Discover your next income investment</h2><p>Hand-picked to match your plan and preferences</p></div><div className="filter-group">{['All','High yield','Growth','Sectors'].map(f=><button key={f} className={filter===f?'selected':''} onClick={()=>setFilter(f)}>{f}</button>)}</div></div>{full && <div className="discovery-controls"><label>Minimum dividend yield <div className="input-prefix"><input type="number" min="0" max="15" step=".1" value={minimumYield} onChange={event=>setMinimumYield(Number(event.target.value))}/><em>%</em></div></label><label>Sector <select value={sector} onChange={event=>setSector(event.target.value)}><option>Any sector</option><option>Broad market</option><option>Healthcare</option></select></label><p>{visible.length} matching idea{visible.length === 1 ? '' : 's'}</p></div>}<div className="rec-grid">{visible.map(r=><article className="rec" key={r.symbol}><div className="rec-head"><div className="ticker" style={{background:r.color}}>{r.symbol.slice(0,2)}</div><button className="icon-button" onClick={()=>addHolding(r)}><Plus size={17}/></button></div><h3>{r.symbol}</h3><p>{r.name}</p><span className="tag">{r.tag}</span><div className="rec-stats"><div><span>Dividend yield</span><b>{r.yield}</b></div><div><span>5y div. growth</span><b>{r.growth}</b></div></div><button className="add-button" onClick={()=>addHolding(r)}>Add to simulation</button></article>)}{!visible.length && <div className="discover-empty"><Search size={20}/><h3>No matching ideas yet</h3><p>Try lowering the minimum yield or broadening your sector preference.</p></div>}</div></section>
 }
 
 function PortfolioScreen({ portfolio, totalValue, annualIncome, overallYield, removeHolding, openHoldingForm, resetPortfolio }) {
@@ -101,7 +103,7 @@ function App() {
       </>}
       {active === 'Portfolio' && <PortfolioScreen portfolio={portfolio} totalValue={totalValue} annualIncome={annualIncome} overallYield={overallYield} removeHolding={removeHolding} openHoldingForm={()=>setShowHoldingForm(true)} resetPortfolio={resetPortfolio}/>} 
       {active === 'Income plan' && <IncomePlanScreen goal={goal} setGoal={setGoal} monthly={monthly} setMonthly={setMonthly} risk={risk} setRisk={setRisk} expenses={expenses} expenseItems={expenseItems} setExpenseItems={setExpenseItems} coverage={coverage} monthlyIncome={monthlyIncome}/>} 
-      {active === 'Discover' && <DiscoverCards filter={filter} setFilter={setFilter} addHolding={addRecommendation}/>} 
+      {active === 'Discover' && <DiscoverCards filter={filter} setFilter={setFilter} addHolding={addRecommendation} full/>} 
     </main>
     {showPlanner && <div className="modal-backdrop"><div className="modal"><button className="close" onClick={()=>setShowPlanner(false)}><X/></button><p className="eyebrow">INCOME PLAN</p><h2>Design your income engine</h2><p className="modal-intro">Tune the inputs and we’ll shape a portfolio path toward your goal.</p><label>Monthly passive-income goal <div className="input-prefix"><span>$</span><input type="number" value={goal} onChange={e=>setGoal(Number(e.target.value))}/><em>/ month</em></div></label><label>Monthly contribution <div className="input-prefix"><span>$</span><input type="number" value={monthly} onChange={e=>setMonthly(Number(e.target.value))}/><em>/ month</em></div></label><label>Risk preference <div className="risk-options">{['Conservative','Balanced','Growth'].map(x=><button key={x} className={risk===x?'selected':''} onClick={()=>setRisk(x)}>{x}</button>)}</div></label><div className="plan-result"><span>Suggested target yield</span><b>{risk==='Conservative'?'3.2%':risk==='Balanced'?'4.1%':'4.8%'}</b><span>Estimated time to goal</span><b>{risk==='Conservative'?'5 years':'3 years, 8 months'}</b></div><button className="primary full" onClick={()=>setShowPlanner(false)}>Save income plan</button></div></div>}
     {showHoldingForm && <HoldingModal onClose={()=>setShowHoldingForm(false)} onSave={holding=>{ addHolding(holding); setShowHoldingForm(false); }}/>} 

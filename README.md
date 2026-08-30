@@ -4,6 +4,8 @@
 
 Divrion is a responsive, dark-mode-first dashboard for planning dividend income, modelling a portfolio, discovering income investments, and seeing how much of your monthly life is already covered.
 
+> Source-available for noncommercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+
 ## Product preview
 
 ### Income overview

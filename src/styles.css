@@ -117,3 +117,6 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 /* Portfolio figures need comfortable reading size without wasting horizontal space. */
 .holding-row { grid-template-columns:2.15fr .95fr .68fr .95fr auto; gap:8px; font-size:13px; }.holding-row.heading { font-size:12px; }.investment b { font-size:14px; }.investment em { font-size:12px; }.holding-row strong { font-size:13px; }.holding-row>span:nth-child(2) small { font-size:11px; }.holding-actions { gap:5px; }.lens-button,.remove { font-size:12px; }
 @media (max-width: 760px) { .holding-row { gap:7px; font-size:12px; }.holding-row.heading { font-size:11px; }.investment b { font-size:13px; } }
+
+/* Make a saved provider unmistakable without exposing its credentials. */
+.source-config:has(.connection-status.connected)::after { display:block; margin-top:20px; padding:13px 14px 13px 39px; border:1px solid #4f7549; border-radius:8px; color:#c9edba; background:linear-gradient(100deg,#263426,#263029); box-shadow:inset 3px 0 #bce978; font-size:13px; font-weight:700; line-height:1.45; content:'Configured data source · Saved locally in this browser and ready to refresh.'; }

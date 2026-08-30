@@ -69,3 +69,6 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .field-help,.source-note,.source-ledger-card p,.source-support p,.recommendation-reason p,.expense-list input,.expense-list span,.discovery-controls label,.discovery-controls select,.discovery-controls p,.calendar-empty p,.calendar-disclaimer { font-size:12px; }
 .connection-status,.source-ledger-card em,.estimate-badge,.calendar-day em,.calendar-day small,.allocation-simulated { font-size:11px; }
 @media (max-width: 760px) { .calendar-day em { font-size:10px; } }
+
+/* Descriptive copy should be as easy to scan as the primary metrics. */
+.income-card p,.coverage-body p,.panel-heading p,.goal-panel>div>p:last-child,.plan-hero p:last-child,.expense-panel>p,.tuneup-grid p,.advice-note,.empty-state p,.empty-legend,.activity-row span,.month-income,.recommendation-reason span,.rec p { font-size:12px; }

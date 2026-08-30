@@ -4,15 +4,15 @@ import { Bell, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
 import './styles.css';
 
 const holdings = [
-  { symbol: 'SCHD', name: 'Schwab U.S. Dividend Equity', value: 18420, yield: 3.82, income: 703.64, color: '#6e5af7' },
-  { symbol: 'VYM', name: 'Vanguard High Dividend Yield', value: 12680, yield: 2.86, income: 362.65, color: '#31bb92' },
-  { symbol: 'O', name: 'Realty Income Corp.', value: 7950, yield: 5.39, income: 428.51, color: '#f5a742' },
-  { symbol: 'DGRO', name: 'iShares Core Dividend Growth', value: 6500, yield: 2.24, income: 145.60, color: '#4d9df2' },
+  { symbol: 'SCHD', name: 'Schwab U.S. Dividend Equity', value: 18420, yield: 3.82, income: 703.64, sector: 'Equity', industry: 'Dividend ETFs', color: '#6e5af7' },
+  { symbol: 'VYM', name: 'Vanguard High Dividend Yield', value: 12680, yield: 2.86, income: 362.65, sector: 'Equity', industry: 'Dividend ETFs', color: '#31bb92' },
+  { symbol: 'O', name: 'Realty Income Corp.', value: 7950, yield: 5.39, income: 428.51, sector: 'Real estate', industry: 'REITs', color: '#f5a742' },
+  { symbol: 'DGRO', name: 'iShares Core Dividend Growth', value: 6500, yield: 2.24, income: 145.60, sector: 'Equity', industry: 'Dividend ETFs', color: '#4d9df2' },
 ];
 const recommendations = [
-  { symbol: 'VIG', name: 'Vanguard Dividend Appreciation', yield: '1.7%', growth: '10.2%', tag: 'Dividend growth', sector: 'Broad market', reason: 'Strong five-year dividend growth for a long-term income plan.', color: '#7a67fa' },
-  { symbol: 'JEPI', name: 'JPMorgan Equity Premium Income', yield: '7.8%', growth: '4.1%', tag: 'High income', sector: 'Broad market', reason: 'High distribution yield to accelerate current income coverage.', color: '#d18bff' },
-  { symbol: 'XLV', name: 'Health Care Select Sector', yield: '1.4%', growth: '8.6%', tag: 'Healthcare', sector: 'Healthcare', reason: 'Healthcare exposure that supports your selected sector preference.', color: '#43c6a1' },
+  { symbol: 'VIG', name: 'Vanguard Dividend Appreciation', yield: '1.7%', growth: '10.2%', tag: 'Dividend growth', sector: 'Equity', industry: 'Dividend ETFs', reason: 'Strong five-year dividend growth for a long-term income plan.', color: '#7a67fa' },
+  { symbol: 'JEPI', name: 'JPMorgan Equity Premium Income', yield: '7.8%', growth: '4.1%', tag: 'High income', sector: 'Equity', industry: 'Options income ETFs', reason: 'High distribution yield to accelerate current income coverage.', color: '#d18bff' },
+  { symbol: 'XLV', name: 'Health Care Select Sector', yield: '1.4%', growth: '8.6%', tag: 'Healthcare', sector: 'Healthcare', industry: 'Healthcare ETFs', reason: 'Healthcare exposure that supports your selected sector preference.', color: '#43c6a1' },
 ];
 const defaultExpenses = [
   { id: 'home', label: 'Housing', amount: 1050 },
@@ -61,7 +61,7 @@ const parseImportedFile = (text, filename) => {
     const yieldValue = numberValue(lookup(record, ['dividendyield', 'yield', 'yieldpercent', 'annualyield']));
     const income = numberValue(lookup(record, ['annualincome', 'dividendincome', 'income'])) || value * yieldValue / 100;
     const quantity = numberValue(lookup(record, ['quantity', 'shares', 'units', 'sharequantity']));
-    return { portfolio: lookup(record, ['portfolio', 'account', 'accountname']) || 'Imported portfolio', holding: { symbol: String(symbol).toUpperCase(), name: lookup(record, ['name', 'security', 'description', 'company']) || String(symbol).toUpperCase(), value, quantity, yield: yieldValue, income, color: '#6e5af7', simulated: false } };
+    return { portfolio: lookup(record, ['portfolio', 'account', 'accountname']) || 'Imported portfolio', holding: { symbol: String(symbol).toUpperCase(), name: lookup(record, ['name', 'security', 'description', 'company']) || String(symbol).toUpperCase(), value, quantity, yield: yieldValue, income, sector: lookup(record, ['sector']) || 'Unclassified', industry: lookup(record, ['industry', 'category']) || 'Unclassified', color: '#6e5af7', simulated: false } };
   }).filter(item => item.holding.symbol);
   if (!normalized.length) throw new Error('No recognizable holdings were found. Include a Symbol or Ticker column.');
   return Object.entries(normalized.reduce((groups, item) => { const key = item.portfolio; groups[key] ||= []; groups[key].push(item.holding); return groups; }, {})).map(([name, holdings]) => ({ name, holdings }));
@@ -72,6 +72,27 @@ function DiscoverCards({ filter, setFilter, addHolding, full = false }) {
   const [sector, setSector] = useState('Any sector');
   const visible = recommendations.filter(r => (filter === 'All' || (filter === 'High yield' && r.tag === 'High income') || (filter === 'Growth' && r.tag === 'Dividend growth') || (filter === 'Sectors' && r.tag === 'Healthcare')) && Number.parseFloat(r.yield) >= minimumYield && (sector === 'Any sector' || r.sector === sector));
   return <section className="panel recommendations"><div className="panel-heading"><div><h2>Discover your next income investment</h2><p>Hand-picked to match your plan and preferences</p></div><div className="filter-group">{['All','High yield','Growth','Sectors'].map(f=><button key={f} className={filter===f?'selected':''} onClick={()=>setFilter(f)}>{f}</button>)}</div></div>{full && <div className="discovery-controls"><label>Minimum dividend yield <div className="input-prefix"><input type="number" min="0" max="15" step=".1" value={minimumYield} onChange={event=>setMinimumYield(Number(event.target.value))}/><em>%</em></div></label><label>Sector <select value={sector} onChange={event=>setSector(event.target.value)}><option>Any sector</option><option>Broad market</option><option>Healthcare</option></select></label><p>{visible.length} matching idea{visible.length === 1 ? '' : 's'}</p></div>}<div className="rec-grid">{visible.map(r=><article className="rec" key={r.symbol}><div className="rec-head"><div className="ticker" style={{background:r.color}}>{r.symbol.slice(0,2)}</div><button className="icon-button" onClick={()=>addHolding(r)}><Plus size={17}/></button></div><h3>{r.symbol}</h3><p>{r.name}</p><span className="tag">{r.tag}</span><div className="rec-stats"><div><span>Dividend yield</span><b>{r.yield}</b></div><div><span>5y div. growth</span><b>{r.growth}</b></div></div><div className="recommendation-reason"><span>Why it matches</span><p>{r.reason}</p></div><button className="add-button" onClick={()=>addHolding(r)}>{full ? 'Add & see impact' : 'Add to simulation'}</button></article>)}{!visible.length && <div className="discover-empty"><Search size={20}/><h3>No matching ideas yet</h3><p>Try lowering the minimum yield or broadening your sector preference.</p></div>}</div></section>
+}
+
+function ConcentrationLens({ portfolio, navigate }) {
+  const [dimension, setDimension] = useState('sector');
+  const [measure, setMeasure] = useState('income');
+  const metric = measure === 'income' ? 'income' : 'value';
+  const total = portfolio.reduce((sum, holding) => sum + Number(holding[metric] || 0), 0);
+  const groups = Object.values(portfolio.reduce((all, holding) => {
+    const name = holding[dimension] || 'Unclassified';
+    all[name] ||= { name, value: 0, holdings: 0, colors: [] };
+    all[name].value += Number(holding[metric] || 0);
+    all[name].holdings += 1;
+    all[name].colors.push(holding.color || '#777786');
+    return all;
+  }, {})).map(group => ({ ...group, share: total ? group.value / total * 100 : 0 })).sort((a, b) => b.value - a.value);
+  const leader = groups[0];
+  const uncategorized = portfolio.filter(holding => !holding[dimension] || holding[dimension] === 'Unclassified').length;
+  const reliance = leader?.share || 0;
+  const posture = reliance >= 50 ? 'High reliance' : reliance >= 30 ? 'Worth watching' : 'Well spread';
+  const postureClass = reliance >= 50 ? 'high' : reliance >= 30 ? 'watch' : 'spread';
+  return <section className="panel concentration-panel"><div className="panel-heading"><div><p className="eyebrow">CONCENTRATION LENS</p><h2>See what your income relies on.</h2><p>Compare where your projected cash flow and invested capital are concentrated.</p></div><button className="ghost" onClick={()=>navigate('Discover')}>Explore ideas</button></div><div className="concentration-controls"><div className="segmented-control">{[['income','Income'],['value','Capital']].map(([key,label])=><button key={key} className={measure===key?'selected':''} onClick={()=>setMeasure(key)}>{label}</button>)}</div><div className="segmented-control">{[['sector','Sector'],['industry','Industry']].map(([key,label])=><button key={key} className={dimension===key?'selected':''} onClick={()=>setDimension(key)}>{label}</button>)}</div></div>{portfolio.length ? <div className="concentration-body"><div className="reliance-card"><span>Largest {dimension} dependency</span><b>{leader?.name || '—'}</b><strong>{reliance.toFixed(0)}%</strong><p>of projected {measure === 'income' ? 'annual income' : 'portfolio value'}</p><em className={postureClass}>{posture}</em></div><div className="concentration-bars">{groups.map(group=><div className="concentration-row" key={group.name}><div><span><i style={{ background: group.colors[0] }}/>{group.name}</span><b>{group.share.toFixed(0)}%</b></div><div className="concentration-track"><i style={{ width: `${group.share}%`, background: group.colors[0] }}/></div><small>{measure === 'income' ? `$${group.value.toFixed(0)} / yr` : `$${group.value.toLocaleString()}`} · {group.holdings} holding{group.holdings === 1 ? '' : 's'}</small></div>)}</div></div> : <div className="concentration-empty"><Compass size={19}/><div><b>Your concentration picture starts with a holding.</b><span>Add or import a portfolio to see where income is coming from.</span></div><button className="ghost" onClick={()=>navigate('Portfolio')}>Go to portfolio</button></div>}{uncategorized > 0 && <p className="concentration-note">{uncategorized} holding{uncategorized === 1 ? ' is' : 's are'} unclassified, so the grouping is incomplete. Add Sector or Industry columns to your next import for a fuller picture.</p>}</section>
 }
 
 function PortfolioScreen({ portfolio, totalValue, annualIncome, overallYield, removeHolding, openHoldingForm, openImport, simulateSuggested, exportPortfolio, deletePortfolio, selectedPortfolioId, portfolioName, canDeletePortfolio, openDataSources }) {
@@ -314,6 +335,7 @@ function App() {
         <div className="panel allocation-panel"><div className="panel-heading"><div><h2>Portfolio allocation</h2><p>How your income portfolio is working</p></div><button className="ghost" onClick={() => navigate('Portfolio')}>View portfolio</button></div><div className={`allocation-content ${allocation.length > 8 ? 'allocation-dense' : ''}`}><div className="allocation-donut" style={{background: allocation.length ? `conic-gradient(${allocation.map((a, i) => `${a.color} ${allocation.slice(0,i).reduce((s,x)=>s+x.share,0)}% ${allocation.slice(0,i+1).reduce((s,x)=>s+x.share,0)}%`).join(',')})` : '#373841'}}><div><strong>${(totalValue/1000).toFixed(1)}k</strong><span>{allocation.length ? 'invested' : 'no holdings'}</span></div></div><div className={`legend ${allocation.length > 8 ? 'legend-large' : allocation.length > 4 ? 'legend-medium' : ''}`}>{allocation.length ? allocation.map(x => <div key={x.symbol}><i style={{background:x.color}}/><span>{x.symbol}{x.simulated && <em className="allocation-simulated">Sim</em>}</span><b>{x.share.toFixed(0)}%</b></div>) : <p className="empty-legend">Add a holding to see your allocation mix.</p>}</div></div></div>
         <div className="panel activity"><div className="panel-heading"><div><h2>Income activity</h2><p>Upcoming dividends and distributions</p></div><button className="ghost" onClick={()=>navigate('Calendar')}>Open calendar</button></div>{portfolio.slice(0,3).map((h,i)=>{ const days=[3,9,16][i]; return <div className="activity-row" key={h.symbol}><div className="ticker" style={{background:h.color}}>{h.symbol.slice(0,2)}</div><div><strong>{h.symbol} dividend</strong><span>Estimated in {days} day{days === 1 ? '' : 's'}</span></div><b>+${(h.income/4).toFixed(2)}</b></div>})}<div className="month-income"><span>Expected for the rest of this month</span><b>+${(annualIncome / 12 * .72).toFixed(0)}</b></div></div>
       </section>
+      <ConcentrationLens portfolio={portfolio} navigate={navigate}/>
       <DiscoverCards filter={filter} setFilter={setFilter} addHolding={addRecommendation}/>
       <section className="panel goal-panel"><div><p className="eyebrow">YOUR INCOME GOAL</p><h2>Reach ${goal.toLocaleString()} in monthly income</h2><p>At your current contribution and return assumptions, you could get there by <strong>{goalDateLabel}</strong> — about {Math.ceil(monthsToGoal / 12)} years.</p></div><button className="primary" onClick={()=>setShowPlanner(true)}>Explore plan <TrendingUp size={17}/></button></section>
       </>}

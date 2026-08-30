@@ -72,3 +72,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 
 /* Descriptive copy should be as easy to scan as the primary metrics. */
 .income-card p,.coverage-body p,.panel-heading p,.goal-panel>div>p:last-child,.plan-hero p:last-child,.expense-panel>p,.tuneup-grid p,.advice-note,.empty-state p,.empty-legend,.activity-row span,.month-income,.recommendation-reason span,.rec p { font-size:12px; }
+
+/* Header controls and panel subtitles need the same at-a-glance readability. */
+.portfolio-switcher select { font-size:12px; }
+.panel-heading p { font-size:13px; }

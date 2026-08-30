@@ -37,11 +37,17 @@ Try an investment amount before acting and see how it changes expected income.
 
 ### Import portfolio data
 
-From the Portfolio workspace, choose **Import** to upload a CSV or JSON export from a broker, spreadsheet, or another tracker. Divrion recognizes common field names such as `Symbol`/`Ticker`, `Name`, `Market Value`, `Yield`, `Annual Income`, `Portfolio`, and `Account`, then creates one or more imported portfolios automatically.
+From the Portfolio workspace, choose **Import** to upload a CSV or JSON export from a broker, spreadsheet, or another tracker. Divrion recognizes common field names such as `Symbol`/`Ticker`, `Name`, `Market Value`, `Shares`/`Quantity`, `Yield`, `Annual Income`, `Portfolio`, and `Account`, then creates one or more imported portfolios automatically.
 
 ## Bring-your-own market data
 
-Users can connect their own Alpha Vantage API key from **Data sources**. The key is stored only in that browser and can refresh imported positions with a current price, dividend yield, calculated market value, and estimated annual income. Imports need share quantities for market-value refreshes.
+Divrion is designed around a transparent, free-first data model:
+
+- **Local calculations:** imports, goals, and simulations stay in the browser.
+- **Official-source foundation:** a future backend can enrich US dividend events from issuer announcements and SEC EDGAR filings, keeping the source and refresh timestamp visible.
+- **Optional personal provider:** users can connect their own Alpha Vantage API key from **Data sources**. The key stays only in that browser and can refresh positions with a current price, dividend yield, calculated market value, and estimated annual income.
+
+Imports need `Shares` or `Quantity` for price-based valuation. Market-data refreshes are explicitly timestamped; future ex-dividend and payment dates should always be confirmed against the issuer announcement.
 
 ## Quick start
 

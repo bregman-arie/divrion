@@ -33,6 +33,10 @@ Try an investment amount before acting and see how it changes expected income.
 | **Portfolio** | Inspect value, blended yield, and income at a holding level. Add or remove simulated holdings to see the impact. |
 | **Discover** | Filter ideas by high yield, dividend growth, or sector, and add them to your simulation. |
 
+### Import portfolio data
+
+From the Portfolio workspace, choose **Import** to upload a CSV or JSON export from a broker, spreadsheet, or another tracker. Divrion recognizes common field names such as `Symbol`/`Ticker`, `Name`, `Market Value`, `Yield`, `Annual Income`, `Portfolio`, and `Account`, then creates one or more imported portfolios automatically.
+
 ## Quick start
 
 **Prerequisites:** Node.js 20+ and npm.

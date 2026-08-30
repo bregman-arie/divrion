@@ -111,3 +111,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 
 /* Long import previews must wrap rather than escape the modal. */
 .import-preview p { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:start; }.import-preview p span { min-width:0; overflow:visible; white-space:normal; overflow-wrap:anywhere; text-align:left; }
+
+/* Portfolio figures need comfortable reading size without wasting horizontal space. */
+.holding-row { grid-template-columns:2.15fr .95fr .68fr .95fr auto; gap:8px; font-size:13px; }.holding-row.heading { font-size:12px; }.investment b { font-size:14px; }.investment em { font-size:12px; }.holding-row strong { font-size:13px; }.holding-row>span:nth-child(2) small { font-size:11px; }.holding-actions { gap:5px; }.lens-button,.remove { font-size:12px; }
+@media (max-width: 760px) { .holding-row { gap:7px; font-size:12px; }.holding-row.heading { font-size:11px; }.investment b { font-size:13px; } }

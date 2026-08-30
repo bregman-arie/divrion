@@ -78,3 +78,10 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 /* Header controls and panel subtitles need the same at-a-glance readability. */
 .portfolio-switcher select { font-size:12px; }
 .panel-heading p { font-size:13px; }
+
+/* App-wide readable minimum for supporting copy, controls, and empty states. */
+.empty-spark,.goal-line,.donut span,.allocation-donut span,.legend div,.ticker,.filter-group button,.risk-options button,.tag,.rec-stats span,.add-button,.modal label,.input-prefix em,.plan-result,.mini-stat span,.holding-row,.investment em,.remove,.form-panel label,.expense-panel label,.cadence-tabs button,.forecast-yield,.forecast-value,.forecast-column>span,.forecast-note,.holding-modal>label,.field-grid label,.income-preview,.sector-chips button,.toast,.amount-input,.simulate-button,.portfolio-danger,.portfolio-danger button,.file-picker,.import-error,.import-preview>span,.import-preview p,.import-preview small,.source-config label,.source-config input,.source-config select,.refresh-panel>p:not(.eyebrow):not(.source-note),.legend.legend-large b,.expense-total,.discover-empty p,.calendar-hero p:last-child,.calendar-total span,.calendar-total em,.payment-row b,.payment-row span,.payment-row strong,.calendar-controls .ghost,.yield-callout,.yield-callout button,.missing-yield { font-size:12px; }
+.concentration-panel .panel-heading>div>p:last-child,.segmented-control button,.reliance-card>span,.reliance-card p,.reliance-card em,.concentration-row>div:first-child,.concentration-row>div:first-child b,.concentration-row small,.concentration-note { font-size:12px; }
+.concentration-empty b { font-size:14px; }
+.concentration-empty span { font-size:13px; }
+@media (max-width: 760px) { .portfolio-actions .primary,.portfolio-actions .ghost,.calendar-controls .ghost { font-size:11px; } }

@@ -106,3 +106,6 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .app-shell,.app-shell * { font-family:'DM Sans',sans-serif !important; }
 
 .onboarding-import { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:10px 12px; border:1px solid #ae7a35; border-radius:7px; color:#ffe1a3; background:#49351f; font-size:12px; font-weight:800; }.onboarding-import:hover { background:#5b4225; }
+
+/* Long import previews must wrap rather than escape the modal. */
+.import-preview p { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:start; }.import-preview p span { min-width:0; overflow:visible; white-space:normal; overflow-wrap:anywhere; text-align:left; }

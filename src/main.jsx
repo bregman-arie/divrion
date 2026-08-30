@@ -39,6 +39,19 @@ const numberValue = value => Number(String(value).replace(/[$,%\s,]/g, '')) || 0
 const parseImportedFile = (text, filename) => {
   const raw = filename.toLowerCase().endsWith('.json') ? JSON.parse(text) : csvRows(text);
   const records = Array.isArray(raw) ? raw : raw.portfolios ? raw.portfolios.flatMap(group => group.holdings.map(item => ({ ...item, portfolio: group.name }))) : raw.holdings || [];
+  const isDivTracker = records.some(record => Object.prototype.hasOwnProperty.call(record, 'Quantity (Adjusted)') && Object.prototype.hasOwnProperty.call(record, 'Cost Per Share (Adjusted)'));
+  if (isDivTracker) {
+    const holdings = Object.values(records.reduce((items, record) => {
+      const symbol = String(record.Ticker || '').toUpperCase(); if (!symbol) return items;
+      const quantity = numberValue(record['Quantity (Adjusted)']);
+      const cost = numberValue(record['Cost Per Share (Adjusted)']);
+      items[symbol] ||= { symbol, name: symbol, value: 0, yield: 0, income: 0, color: '#6e5af7', simulated: false };
+      items[symbol].value += quantity * cost;
+      return items;
+    }, {}));
+    if (!holdings.length) throw new Error('No DivTracker tickers were found.');
+    return [{ name: 'DivTracker import', holdings, note: 'DivTracker transaction history was aggregated by ticker. Values shown are cost basis, not live market values.' }];
+  }
   const normalized = records.map(record => {
     const symbol = lookup(record, ['symbol', 'ticker']);
     const value = numberValue(lookup(record, ['marketvalue', 'value', 'currentvalue', 'equity', 'totalvalue']));
@@ -81,7 +94,7 @@ function ImportModal({ onClose, onImport }) {
     reader.readAsText(file);
   };
   const count = preview.reduce((sum, group) => sum + group.holdings.length, 0);
-  return <div className="modal-backdrop"><div className="modal import-modal"><button className="close" onClick={onClose}><X/></button><p className="eyebrow">IMPORT PORTFOLIO DATA</p><h2>Bring your holdings into Divrion</h2><p className="modal-intro">Upload CSV or JSON from a broker, spreadsheet, or another tracker. Recognized fields include Symbol/Ticker, Name, Market Value, Yield, Income, Portfolio, and Account.</p><label className="file-picker"><FileUp size={19}/><span>Choose a CSV or JSON file</span><input type="file" accept=".csv,.json,text/csv,application/json" onChange={loadFile}/></label>{error && <p className="import-error">{error}</p>}{preview.length > 0 && <div className="import-preview"><span>Ready to import</span><b>{count} holding{count === 1 ? '' : 's'} across {preview.length} portfolio{preview.length === 1 ? '' : 's'}</b><div>{preview.map(group => <p key={group.name}><strong>{group.name}</strong><span>{group.holdings.map(item => item.symbol).join(', ')}</span></p>)}</div></div>}<button className="primary full" disabled={!preview.length} onClick={()=>{ onImport(preview); onClose(); }}>Import {count || ''} holdings</button></div></div>
+  return <div className="modal-backdrop"><div className="modal import-modal"><button className="close" onClick={onClose}><X/></button><p className="eyebrow">IMPORT PORTFOLIO DATA</p><h2>Bring your holdings into Divrion</h2><p className="modal-intro">Upload CSV or JSON from a broker, spreadsheet, or another tracker. Recognized fields include Symbol/Ticker, Name, Market Value, Yield, Income, Portfolio, and Account.</p><label className="file-picker"><FileUp size={19}/><span>Choose a CSV or JSON file</span><input type="file" accept=".csv,.json,text/csv,application/json" onChange={loadFile}/></label>{error && <p className="import-error">{error}</p>}{preview.length > 0 && <div className="import-preview"><span>Ready to import</span><b>{count} holding{count === 1 ? '' : 's'} across {preview.length} portfolio{preview.length === 1 ? '' : 's'}</b><div>{preview.map(group => <p key={group.name}><strong>{group.name}</strong><span>{group.holdings.map(item => item.symbol).join(', ')}</span></p>)}</div>{preview[0].note && <small>{preview[0].note}</small>}</div>}<button className="primary full" disabled={!preview.length} onClick={()=>{ onImport(preview); onClose(); }}>Import {count || ''} holdings</button></div></div>
 }
 
 function IncomePlanScreen({ goal, setGoal, monthly, setMonthly, risk, setRisk, expenses, expenseItems, setExpenseItems, coverage, monthlyIncome }) {

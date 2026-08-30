@@ -85,3 +85,8 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .concentration-empty b { font-size:14px; }
 .concentration-empty span { font-size:13px; }
 @media (max-width: 760px) { .portfolio-actions .primary,.portfolio-actions .ghost,.calendar-controls .ghost { font-size:11px; } }
+
+/* Sentence-length guidance deserves a clearly readable body size. */
+.income-card p,.coverage-body p,.goal-panel>div>p:last-child,.plan-hero p:last-child,.expense-panel>p,.tuneup-grid p,.empty-state p,.discover-empty p,.calendar-hero p:last-child,.calendar-empty p,.source-hero p:last-child,.reset-panel p:last-child { font-size:14px; line-height:1.55; }
+.concentration-empty b { font-size:15px; }
+.concentration-empty span { font-size:14px; line-height:1.5; }

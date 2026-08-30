@@ -66,6 +66,19 @@ npm run dev
 
 Vite will print the local address (normally `http://localhost:5173`). Open it in your browser.
 
+### Optional AI dividend enrichment
+
+Settings includes a one-time **Populate once using AI** flow. It researches public sources, shows every proposed dividend yield with its source and confidence, and only saves updates you approve.
+
+The feature requires a server-side OpenAI API key; never put this key in a Vite `VITE_*` variable or browser code.
+
+```bash
+export OPENAI_API_KEY="your_key"
+npm run dev
+```
+
+Optionally set `OPENAI_MODEL` to choose the model used for research. The server asks the model to prefer issuer, fund-sponsor, SEC, and exchange sources and to return an unknown value rather than inventing a dividend figure.
+
 ## Demo mode
 
 Divrion starts with an empty portfolio by default. To load the illustrative portfolios and sample income data, open the app with the `demo` query flag:

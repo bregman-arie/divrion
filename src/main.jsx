@@ -169,17 +169,37 @@ function HoldingModal({ onClose, onSave }) {
   return <div className="modal-backdrop"><form className="modal holding-modal" onSubmit={submit}><button type="button" className="close" onClick={onClose}><X/></button><p className="eyebrow">PORTFOLIO SIMULATION</p><h2>Add a holding</h2><p className="modal-intro">Use market value, your original capital, and dividend yield to separate portfolio growth from income.</p><div className="field-grid"><label>Symbol<input required maxLength="8" placeholder="e.g. SCHD" value={draft.symbol} onChange={change('symbol')}/></label><label>Annual yield<input required type="number" min="0" step="0.01" value={draft.yield} onChange={change('yield')}/></label></div><label>Investment name<input required placeholder="e.g. Schwab U.S. Dividend Equity ETF" value={draft.name} onChange={change('name')}/></label><div className="field-grid"><label>Market value <div className="input-prefix"><span>$</span><input required type="number" min="0" value={draft.value} onChange={change('value')}/></div></label><label>Original capital <div className="input-prefix"><span>$</span><input required type="number" min="0" value={draft.costBasis} onChange={change('costBasis')}/></div></label></div><label>Shares <input type="number" min="0" step="any" placeholder="Optional" value={draft.quantity} onChange={change('quantity')}/></label><div className="income-preview"><span>Estimated annual income</span><b>${(Number(draft.value || 0) * Number(draft.yield || 0) / 100).toFixed(2)}</b></div><button className="primary full" type="submit">Add to portfolio</button></form></div>
 }
 
-function ImportModal({ onClose, onImport }) {
+function ImportModal({ portfolios, onClose, onImport }) {
   const [preview, setPreview] = useState([]);
+  const [assignments, setAssignments] = useState([]);
   const [error, setError] = useState('');
   const loadFile = event => {
     const file = event.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => { try { setPreview(parseImportedFile(String(reader.result), file.name)); setError(''); } catch (err) { setPreview([]); setError(err.message || 'Unable to read this file.'); } };
+    reader.onload = () => { try { const parsed = parseImportedFile(String(reader.result), file.name); setPreview(parsed); setAssignments(parsed.flatMap(group => group.holdings.map((holding, index) => ({ id: `${group.name}-${holding.symbol}-${index}`, holding, suggestedName: group.name, destination: 'new', portfolioName: group.name })))); setError(''); } catch (err) { setPreview([]); setAssignments([]); setError(err.message || 'Unable to read this file.'); } };
     reader.readAsText(file);
   };
   const count = preview.reduce((sum, group) => sum + group.holdings.length, 0);
-  return <div className="modal-backdrop"><div className="modal import-modal"><button className="close" onClick={onClose}><X/></button><p className="eyebrow">IMPORT PORTFOLIO DATA</p><h2>Bring your holdings into Divrion</h2><p className="modal-intro">Upload CSV or JSON from a broker, spreadsheet, or another tracker. Recognized fields include Symbol/Ticker, Name, Market Value, Yield, Income, Portfolio, and Account.</p><label className="file-picker"><FileUp size={19}/><span>Choose a CSV or JSON file</span><input type="file" accept=".csv,.json,text/csv,application/json" onChange={loadFile}/></label>{error && <p className="import-error">{error}</p>}{preview.length > 0 && <div className="import-preview"><span>Ready to import</span><b>{count} holding{count === 1 ? '' : 's'} across {preview.length} portfolio{preview.length === 1 ? '' : 's'}</b><div>{preview.map(group => <p key={group.name}><strong>{group.name}</strong><span>{group.holdings.map(item => item.symbol).join(', ')}</span></p>)}</div>{preview[0].note && <small>{preview[0].note}</small>}</div>}<button className="primary full" disabled={!preview.length} onClick={()=>{ onImport(preview); onClose(); }}>Import {count || ''} holdings</button></div></div>
+  const updateAssignment = (id, changes) => setAssignments(current => current.map(item => item.id === id ? { ...item, ...changes } : item));
+  return <div className="modal-backdrop"><div className="modal import-modal"><button className="close" onClick={onClose}><X/></button><p className="eyebrow">IMPORT PORTFOLIO DATA</p><h2>Bring your holdings into Divrion</h2><p className="modal-intro">Upload CSV or JSON from a broker, spreadsheet, or another tracker. Choose a destination for every holding, or name a new portfolio as you import.</p><label className="file-picker"><FileUp size={19}/><span>Choose a CSV or JSON file</span><input type="file" accept=".csv,.json,text/csv,application/json" onChange={loadFile}/></label>{error && <p className="import-error">{error}</p>}{preview.length > 0 && <div className="import-preview"><span>Ready to import</span><b>{count} holding{count === 1 ? '' : 's'} ready to assign</b><div className="import-assignments">{assignments.map(item => <div className="import-assignment" key={item.id}><div><strong>{item.holding.symbol}</strong><span>{item.holding.name}</span></div><select aria-label={`Portfolio for ${item.holding.symbol}`} value={item.destination} onChange={event=>updateAssignment(item.id, { destination:event.target.value })}><option value="new">New portfolio</option>{portfolios.map(portfolio => <option key={portfolio.id} value={portfolio.id}>{portfolio.name}</option>)}</select>{item.destination === 'new' && <input aria-label={`New portfolio name for ${item.holding.symbol}`} value={item.portfolioName} onChange={event=>updateAssignment(item.id, { portfolioName:event.target.value })} placeholder="Portfolio name"/>}</div>)}</div>{preview[0].note && <small>{preview[0].note}</small>}</div>}<button className="primary full" disabled={!assignments.length || assignments.some(item => item.destination === 'new' && !item.portfolioName.trim())} onClick={()=>{ onImport(assignments); onClose(); }}>Import {count || ''} holdings</button></div></div>
+}
+
+function AiEnrichmentPanel({ portfolio, applyUpdates }) {
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState('');
+  const [updates, setUpdates] = useState([]);
+  const start = async () => {
+    setRunning(true); setError('');
+    try {
+      const holdings = portfolio.map(({ portfolioId, symbol, name, quantity, value, yield: currentYield }) => ({ portfolioId, symbol, name, quantity, value, currentYield }));
+      const response = await fetch('/api/ai-enrich', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ holdings }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to enrich holdings.');
+      setUpdates(data.updates || []);
+    } catch (err) { setError(err.message || 'Unable to enrich holdings.'); } finally { setRunning(false); }
+  };
+  const usable = updates.filter(update => Number(update.trailingYieldPercent) > 0 || Number(update.annualDividendPerShare) > 0);
+  return <section className="panel ai-enrichment"><div className="panel-heading"><div><p className="eyebrow">AI RESEARCH</p><h2>Populate dividend data once.</h2><p>Researches public primary sources and asks you to review every proposed yield before saving it.</p></div></div>{!updates.length ? <><p className="ai-enrichment-note">No credentials leave this browser except to your local server. AI never fills a value without a cited source.</p><button className="primary" disabled={!portfolio.length || running} onClick={start}>{running ? 'Researching holdings…' : `Populate once using AI${portfolio.length ? ` (${portfolio.length} holdings)` : ''}`}</button>{error && <p className="import-error">{error}</p>}</> : <><div className="ai-review-list">{updates.map(update => <article key={`${update.portfolioId}-${update.symbol}`}><div><b>{update.symbol}</b><span>{Number(update.trailingYieldPercent) > 0 ? `${Number(update.trailingYieldPercent).toFixed(2)}% trailing yield` : 'No verified dividend data found'}</span></div><div><em className={`ai-confidence ${update.confidence}`}>{update.confidence}</em>{update.sourceUrl ? <a href={update.sourceUrl} target="_blank" rel="noreferrer">Source</a> : <small>No source</small>}</div><p>{update.note}</p></article>)}</div><div className="ai-review-actions"><button className="primary" disabled={!usable.length} onClick={()=>{applyUpdates(usable);setUpdates([]);}}>Apply {usable.length} verified update{usable.length === 1 ? '' : 's'}</button><button className="ghost" onClick={()=>setUpdates([])}>Discard</button></div></>}</section>
 }
 
 function SettingsScreen({ config, saveConfig, refreshMarketData, refreshing, selectedName, holdingsWithQuantity, providerUpdatedAt, portfolioSize, resetAllData }) {
@@ -348,10 +368,22 @@ function App() {
     setSelectedPortfolioId('combined');
     setToast(`${activePortfolio.name} deleted`);
   };
-  const importPortfolios = groups => {
-    setPortfolios(current => [...current, ...groups.map((group, index) => ({ id: crypto.randomUUID(), name: current.some(item => item.name === group.name) ? `${group.name} ${index + 2}` : group.name, holdings: group.holdings }))]);
+  const importPortfolios = assignments => {
+    setPortfolios(current => {
+      const imported = current.map(group => ({ ...group, holdings: [...group.holdings] }));
+      const newPortfolios = new Map();
+      const usedNames = new Set(current.map(group => group.name.toLowerCase()));
+      const availableName = requested => { const base = requested.trim() || 'Imported portfolio'; let name = base; let suffix = 2; while (usedNames.has(name.toLowerCase())) { name = `${base} ${suffix}`; suffix += 1; } usedNames.add(name.toLowerCase()); return name; };
+      assignments.forEach(item => {
+        if (item.destination !== 'new') { const destination = imported.find(group => group.id === item.destination); if (destination) destination.holdings.push(item.holding); return; }
+        const key = item.portfolioName.trim().toLowerCase();
+        if (!newPortfolios.has(key)) newPortfolios.set(key, { id: crypto.randomUUID(), name: availableName(item.portfolioName), holdings: [] });
+        newPortfolios.get(key).holdings.push(item.holding);
+      });
+      return [...imported, ...newPortfolios.values()];
+    });
     setSelectedPortfolioId('combined');
-    setToast(`${groups.length} portfolio${groups.length === 1 ? '' : 's'} imported`);
+    setToast(`${assignments.length} holding${assignments.length === 1 ? '' : 's'} imported`);
   };
   const refreshMarketData = async () => {
     const holdings = portfolio.filter(item => Number(item.quantity) > 0);
@@ -385,6 +417,16 @@ function App() {
       setPortfolios(current => current.map(group => ({ ...group, holdings: group.holdings.map(holding => { const update = usable.find(item => item.portfolioId === group.id && item.symbol === holding.symbol); return update ? { ...holding, value: update.value, yield: update.yield, income: update.income, marketDataSource: update.source, lastPrice: update.price, lastUpdated: refreshedAt } : holding; }) })));
       setToast(`${usable.length} holding${usable.length === 1 ? '' : 's'} refreshed from ${dataSourceConfig.provider === 'alpaca' ? 'Alpaca' : 'Alpha Vantage'}`);
     } catch { setToast('Market refresh failed. Check your API key and provider limits.'); } finally { setRefreshing(false); }
+  };
+  const applyAiUpdates = updates => {
+    const appliedAt = new Date().toISOString();
+    setPortfolios(current => current.map(group => ({ ...group, holdings: group.holdings.map(holding => {
+      const update = updates.find(item => item.portfolioId === group.id && item.symbol === holding.symbol);
+      if (!update) return holding;
+      const yieldValue = Number(update.trailingYieldPercent) || (Number(update.annualDividendPerShare) && Number(holding.value) ? Number(update.annualDividendPerShare) * Number(holding.quantity || 0) / Number(holding.value) * 100 : holding.yield);
+      return { ...holding, yield: yieldValue, income: Number(holding.value) * yieldValue / 100, dividendDataSource: update.sourceName, dividendSourceUrl: update.sourceUrl, dividendConfidence: update.confidence, dividendResearchNote: update.note, dividendEnrichedAt: appliedAt };
+    }) })));
+    setToast(`${updates.length} holding${updates.length === 1 ? '' : 's'} updated from cited AI research`);
   };
   const exportPortfolio = () => {
     const quote = value => `"${String(value).replaceAll('"', '""')}"`;
@@ -421,11 +463,11 @@ function App() {
       {active === 'Calendar' && <CalendarScreen portfolio={displayPortfolio} navigate={navigate}/>}
       {active === 'Income plan' && <IncomePlanScreen goal={goal} setGoal={setGoal} monthly={monthly} setMonthly={setMonthly} risk={risk} setRisk={setRisk} expenses={expenses} expenseItems={expenseItems} setExpenseItems={setExpenseItems} coverage={coverage} monthlyIncome={monthlyIncome} milestones={milestones} setMilestones={setMilestones}/>}
       {active === 'Discover' && <DiscoverCards filter={filter} setFilter={setFilter} addHolding={addRecommendation} full/>} 
-      {active === 'Settings' && <SettingsScreen config={dataSourceConfig} saveConfig={setDataSourceConfig} refreshMarketData={refreshMarketData} refreshing={refreshing} selectedName={selectedPortfolioId === 'combined' ? 'combined portfolios' : activePortfolio.name} holdingsWithQuantity={portfolio.filter(item => Number(item.quantity) > 0).length} portfolioSize={portfolio.length} providerUpdatedAt={portfolio.map(item => item.lastUpdated).filter(Boolean).sort().at(-1)} resetAllData={resetAllData}/>}
+      {active === 'Settings' && <><SettingsScreen config={dataSourceConfig} saveConfig={setDataSourceConfig} refreshMarketData={refreshMarketData} refreshing={refreshing} selectedName={selectedPortfolioId === 'combined' ? 'combined portfolios' : activePortfolio.name} holdingsWithQuantity={portfolio.filter(item => Number(item.quantity) > 0).length} portfolioSize={portfolio.length} providerUpdatedAt={portfolio.map(item => item.lastUpdated).filter(Boolean).sort().at(-1)} resetAllData={resetAllData}/><AiEnrichmentPanel portfolio={portfolio} applyUpdates={applyAiUpdates}/></>}
     </main>
     {showPlanner && <div className="modal-backdrop"><div className="modal"><button className="close" onClick={()=>setShowPlanner(false)}><X/></button><p className="eyebrow">INCOME PLAN</p><h2>Design your income engine</h2><p className="modal-intro">Tune the inputs and we’ll shape a portfolio path toward your goal.</p><label>Monthly passive-income goal <div className="input-prefix"><span>$</span><input type="number" value={goal} onChange={e=>setGoal(Number(e.target.value))}/><em>/ month</em></div></label><label>Monthly contribution <div className="input-prefix"><span>$</span><input type="number" value={monthly} onChange={e=>setMonthly(Number(e.target.value))}/><em>/ month</em></div></label><label>Risk preference <div className="risk-options">{['Conservative','Balanced','Growth'].map(x=><button key={x} className={risk===x?'selected':''} onClick={()=>setRisk(x)}>{x}</button>)}</div></label><div className="plan-result"><span>Suggested target yield</span><b>{risk==='Conservative'?'3.2%':risk==='Balanced'?'4.1%':'4.8%'}</b><span>Estimated time to goal</span><b>{risk==='Conservative'?'5 years':'3 years, 8 months'}</b></div><button className="primary full" onClick={()=>setShowPlanner(false)}>Save income plan</button></div></div>}
     {showHoldingForm && <HoldingModal onClose={()=>setShowHoldingForm(false)} onSave={holding=>{ addHolding(holding); setShowHoldingForm(false); }}/>} 
-    {showImport && <ImportModal onClose={()=>setShowImport(false)} onImport={importPortfolios}/>} 
+    {showImport && <ImportModal portfolios={portfolios} onClose={()=>setShowImport(false)} onImport={importPortfolios}/>}
     {toast && <div className="toast" role="status">{toast}</div>}
   </div>
 }

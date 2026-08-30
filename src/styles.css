@@ -92,3 +92,8 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .income-card p,.coverage-body p,.goal-panel>div>p:last-child,.plan-hero p:last-child,.expense-panel>p,.tuneup-grid p,.empty-state p,.discover-empty p,.calendar-hero p:last-child,.calendar-empty p,.source-hero p:last-child,.reset-panel p:last-child { font-size:14px; line-height:1.55; }
 .concentration-empty b { font-size:15px; }
 .concentration-empty span { font-size:14px; line-height:1.5; }
+
+/* A compact first-run checklist turns an empty dashboard into a clear next step. */
+.income-onboarding-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }.income-onboarding-actions .ghost { color:#d7d1ff; border-color:#625b82; background:#313041; }
+.newcomer-panel { display:flex; justify-content:space-between; align-items:center; gap:28px; margin-top:18px; padding:27px 29px; border-color:#4e5f47; background:linear-gradient(115deg,#283129,#262832); }.newcomer-panel h2 { margin-bottom:8px; }.newcomer-panel p:last-child { max-width:620px; margin:0; color:#c0c8bb; font-size:14px; line-height:1.55; }.newcomer-actions { display:flex; flex:none; flex-wrap:wrap; justify-content:flex-end; gap:9px; max-width:350px; }.newcomer-actions .ghost { color:#e0dcef; border-color:#5d596c; background:#30303a; }
+@media (max-width: 760px) { .income-onboarding-actions,.newcomer-actions { align-items:stretch; flex-direction:column; }.income-onboarding-actions button,.newcomer-actions button { width:100%; }.newcomer-panel { align-items:stretch; flex-direction:column; gap:18px; }.newcomer-actions { max-width:none; } }

@@ -4,10 +4,10 @@ import { Bell, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
 import './styles.css';
 
 const holdings = [
-  { symbol: 'SCHD', name: 'Schwab U.S. Dividend Equity', value: 18420, costBasis: 15680, yield: 3.82, income: 703.64, sector: 'Equity', industry: 'Dividend ETFs', color: '#6e5af7' },
-  { symbol: 'VYM', name: 'Vanguard High Dividend Yield', value: 12680, costBasis: 11940, yield: 2.86, income: 362.65, sector: 'Equity', industry: 'Dividend ETFs', color: '#31bb92' },
-  { symbol: 'O', name: 'Realty Income Corp.', value: 7950, costBasis: 8240, yield: 5.39, income: 428.51, sector: 'Real estate', industry: 'REITs', color: '#f5a742' },
-  { symbol: 'DGRO', name: 'iShares Core Dividend Growth', value: 6500, costBasis: 5980, yield: 2.24, income: 145.60, sector: 'Equity', industry: 'Dividend ETFs', color: '#4d9df2' },
+  { symbol: 'SCHD', name: 'Schwab U.S. Dividend Equity', value: 18420, costBasis: 15680, yield: 3.82, income: 703.64, payoutRatio: 38, dividendGrowth: 11.2, dividendYears: 13, sector: 'Equity', industry: 'Dividend ETFs', color: '#6e5af7' },
+  { symbol: 'VYM', name: 'Vanguard High Dividend Yield', value: 12680, costBasis: 11940, yield: 2.86, income: 362.65, payoutRatio: 42, dividendGrowth: 6.9, dividendYears: 18, sector: 'Equity', industry: 'Dividend ETFs', color: '#31bb92' },
+  { symbol: 'O', name: 'Realty Income Corp.', value: 7950, costBasis: 8240, yield: 5.39, income: 428.51, payoutRatio: 76, dividendGrowth: 3.8, dividendYears: 28, sector: 'Real estate', industry: 'REITs', color: '#f5a742' },
+  { symbol: 'DGRO', name: 'iShares Core Dividend Growth', value: 6500, costBasis: 5980, yield: 2.24, income: 145.60, payoutRatio: 35, dividendGrowth: 10.5, dividendYears: 10, sector: 'Equity', industry: 'Dividend ETFs', color: '#4d9df2' },
 ];
 const recommendations = [
   { symbol: 'VIG', name: 'Vanguard Dividend Appreciation', yield: '1.7%', growth: '10.2%', tag: 'Dividend growth', sector: 'Equity', industry: 'Dividend ETFs', reason: 'Strong five-year dividend growth for a long-term income plan.', color: '#7a67fa' },
@@ -65,7 +65,11 @@ const parseImportedFile = (text, filename) => {
     const costPerShare = numberValue(lookup(record, ['costpershare', 'avgcost', 'averagecost', 'costbasisps']));
     const reportedCostBasis = numberValue(lookup(record, ['costbasis', 'totalcost', 'investedamount', 'purchasevalue']));
     const costBasis = reportedCostBasis || (quantity && costPerShare ? quantity * costPerShare : value);
-    return { portfolio: lookup(record, ['portfolio', 'account', 'accountname']) || 'Imported portfolio', holding: { symbol: String(symbol).toUpperCase(), name: lookup(record, ['name', 'security', 'description', 'company']) || String(symbol).toUpperCase(), value, costBasis, quantity, yield: yieldValue, income, sector: lookup(record, ['sector']) || 'Unclassified', industry: lookup(record, ['industry', 'category']) || 'Unclassified', color: '#6e5af7', simulated: false } };
+    const rawPayoutRatio = numberValue(lookup(record, ['payoutratio', 'dividendpayoutratio']));
+    const payoutRatio = rawPayoutRatio > 0 && rawPayoutRatio <= 1 ? rawPayoutRatio * 100 : rawPayoutRatio;
+    const dividendGrowth = numberValue(lookup(record, ['dividendgrowth', 'dividendgrowth5y', 'fiveyeardividendgrowth']));
+    const dividendYears = numberValue(lookup(record, ['dividendyears', 'yearsofincreases', 'dividendstreak']));
+    return { portfolio: lookup(record, ['portfolio', 'account', 'accountname']) || 'Imported portfolio', holding: { symbol: String(symbol).toUpperCase(), name: lookup(record, ['name', 'security', 'description', 'company']) || String(symbol).toUpperCase(), value, costBasis, quantity, yield: yieldValue, income, payoutRatio, dividendGrowth, dividendYears, sector: lookup(record, ['sector']) || 'Unclassified', industry: lookup(record, ['industry', 'category']) || 'Unclassified', color: '#6e5af7', simulated: false } };
   }).filter(item => item.holding.symbol);
   if (!normalized.length) throw new Error('No recognizable holdings were found. Include a Symbol or Ticker column.');
   return Object.entries(normalized.reduce((groups, item) => { const key = item.portfolio; groups[key] ||= []; groups[key].push(item.holding); return groups; }, {})).map(([name, holdings]) => ({ name, holdings }));
@@ -97,6 +101,25 @@ function ConcentrationLens({ portfolio, navigate }) {
   const posture = reliance >= 50 ? 'High reliance' : reliance >= 30 ? 'Worth watching' : 'Well spread';
   const postureClass = reliance >= 50 ? 'high' : reliance >= 30 ? 'watch' : 'spread';
   return <section className="panel concentration-panel"><div className="panel-heading"><div><p className="eyebrow">CONCENTRATION LENS</p><h2>See what your income relies on.</h2><p>Compare where your projected cash flow and invested capital are concentrated.</p></div><button className="ghost" onClick={()=>navigate('Discover')}>Explore ideas</button></div><div className="concentration-controls"><div className="segmented-control">{[['income','Income'],['value','Capital']].map(([key,label])=><button key={key} className={measure===key?'selected':''} onClick={()=>setMeasure(key)}>{label}</button>)}</div><div className="segmented-control">{[['sector','Sector'],['industry','Industry']].map(([key,label])=><button key={key} className={dimension===key?'selected':''} onClick={()=>setDimension(key)}>{label}</button>)}</div></div>{portfolio.length ? <div className="concentration-body"><div className="reliance-card"><span>Largest {dimension} dependency</span><b>{leader?.name || '—'}</b><strong>{reliance.toFixed(0)}%</strong><p>of projected {measure === 'income' ? 'annual income' : 'portfolio value'}</p><em className={postureClass}>{posture}</em></div><div className="concentration-bars">{groups.map(group=><div className="concentration-row" key={group.name}><div><span><i style={{ background: group.colors[0] }}/>{group.name}</span><b>{group.share.toFixed(0)}%</b></div><div className="concentration-track"><i style={{ width: `${group.share}%`, background: group.colors[0] }}/></div><small>{measure === 'income' ? `$${group.value.toFixed(0)} / yr` : `$${group.value.toLocaleString()}`} · {group.holdings} holding{group.holdings === 1 ? '' : 's'}</small></div>)}</div></div> : <div className="concentration-empty"><Compass size={19}/><div><b>Your concentration picture starts with a holding.</b><span>Add or import a portfolio to see where income is coming from.</span></div><button className="ghost" onClick={()=>navigate('Portfolio')}>Go to portfolio</button></div>}{uncategorized > 0 && <p className="concentration-note">{uncategorized} holding{uncategorized === 1 ? ' is' : 's are'} unclassified, so the grouping is incomplete. Add Sector or Industry columns to your next import for a fuller picture.</p>}</section>
+}
+
+const confidenceFor = holding => {
+  const payout = Number(holding.payoutRatio || 0);
+  const growth = Number(holding.dividendGrowth || 0);
+  const years = Number(holding.dividendYears || 0);
+  const evidence = [payout, growth, years].filter(Boolean).length;
+  if (!evidence) return { level: 'Needs data', tone: 'unknown', evidence: 'Add payout, growth, or history data to assess this income.' };
+  if (payout > 80 || growth < 0) return { level: 'Watch', tone: 'watch', evidence: payout > 80 ? `Payout ratio is ${payout.toFixed(0)}%, leaving less room for a setback.` : 'Reported dividend growth is negative.' };
+  if (payout <= 65 && growth >= 3 && years >= 5) return { level: 'Steady', tone: 'steady', evidence: `${years.toFixed(0)} years of history, ${growth.toFixed(1)}% growth, and ${payout.toFixed(0)}% payout.` };
+  return { level: 'Building evidence', tone: 'building', evidence: `${evidence} of 3 confidence signals are available.` };
+};
+
+function IncomeConfidencePanel({ portfolio, navigate }) {
+  const assessed = portfolio.map(holding => ({ holding, ...confidenceFor(holding) }));
+  const annualIncome = portfolio.reduce((sum, holding) => sum + Number(holding.income || 0), 0);
+  const steadyIncome = assessed.filter(item => item.tone === 'steady').reduce((sum, item) => sum + Number(item.holding.income || 0), 0);
+  const known = assessed.filter(item => item.tone !== 'unknown').length;
+  return <section className="panel confidence-panel"><div className="panel-heading"><div><p className="eyebrow">INCOME CONFIDENCE</p><h2>Know what supports your cash flow.</h2><p>Divrion explains the available evidence instead of turning it into an opaque safety score.</p></div><button className="ghost" onClick={()=>navigate('Settings')}>Data settings</button></div>{portfolio.length ? <><div className="confidence-summary"><div><span>Income with steady signals</span><b>{annualIncome ? `${(steadyIncome / annualIncome * 100).toFixed(0)}%` : '—'}</b><em>${steadyIncome.toFixed(0)} / yr</em></div><div><span>Holdings with evidence</span><b>{known} of {portfolio.length}</b><em>Payout ratio, growth, or history</em></div><p>Confidence is a research prompt, not investment advice. Review source data before acting.</p></div><div className="confidence-list">{assessed.sort((a,b) => Number(b.holding.income || 0) - Number(a.holding.income || 0)).map(item => <article className="confidence-row" key={`${item.holding.portfolioId}-${item.holding.symbol}`}><div className="ticker" style={{ background:item.holding.color }}>{item.holding.symbol.slice(0,2)}</div><div className="confidence-holding"><b>{item.holding.symbol}</b><span>{item.evidence}</span></div><div className="confidence-signals"><span>{item.holding.payoutRatio ? `${item.holding.payoutRatio}% payout` : 'Payout n/a'}</span><span>{item.holding.dividendGrowth ? `${item.holding.dividendGrowth}% growth` : 'Growth n/a'}</span><span>{item.holding.dividendYears ? `${item.holding.dividendYears}y history` : 'History n/a'}</span></div><em className={`confidence-status ${item.tone}`}>{item.level}</em></article>)}</div></> : <div className="confidence-empty"><ShieldCheck size={20}/><div><b>Income confidence appears once you add holdings.</b><span>Import dividend history fields when available to make the assessment richer.</span></div></div>}</section>
 }
 
 function PortfolioScreen({ portfolio, totalValue, annualIncome, overallYield, totalCostBasis, totalGainLoss, totalReturn, removeHolding, openHoldingForm, openImport, simulateSuggested, exportPortfolio, deletePortfolio, selectedPortfolioId, portfolioName, canDeletePortfolio, openDataSources }) {
@@ -344,8 +367,8 @@ function App() {
         <div className="panel activity"><div className="panel-heading"><div><h2>Income activity</h2><p>Upcoming dividends and distributions</p></div><button className="ghost" onClick={()=>navigate('Calendar')}>Open calendar</button></div>{portfolio.slice(0,3).map((h,i)=>{ const days=[3,9,16][i]; return <div className="activity-row" key={h.symbol}><div className="ticker" style={{background:h.color}}>{h.symbol.slice(0,2)}</div><div><strong>{h.symbol} dividend</strong><span>Estimated in {days} day{days === 1 ? '' : 's'}</span></div><b>+${(h.income/4).toFixed(2)}</b></div>})}<div className="month-income"><span>Expected for the rest of this month</span><b>+${(annualIncome / 12 * .72).toFixed(0)}</b></div></div>
       </section>
       <ConcentrationLens portfolio={portfolio} navigate={navigate}/>
+      <IncomeConfidencePanel portfolio={portfolio} navigate={navigate}/>
       <DiscoverCards filter={filter} setFilter={setFilter} addHolding={addRecommendation}/>
-      <section className="panel goal-panel"><div><p className="eyebrow">YOUR INCOME GOAL</p><h2>Reach ${goal.toLocaleString()} in monthly income</h2><p>At your current contribution and return assumptions, you could get there by <strong>{goalDateLabel}</strong> — about {Math.ceil(monthsToGoal / 12)} years.</p></div><button className="primary" onClick={()=>setShowPlanner(true)}>Explore plan <TrendingUp size={17}/></button></section>
       </>}
       {active === 'Portfolio' && <PortfolioScreen portfolio={portfolio} totalValue={totalValue} annualIncome={annualIncome} overallYield={overallYield} totalCostBasis={totalCostBasis} totalGainLoss={totalGainLoss} totalReturn={totalReturn} removeHolding={removeHoldingWithToast} openHoldingForm={()=>setShowHoldingForm(true)} openImport={()=>setShowImport(true)} simulateSuggested={simulateSuggested} exportPortfolio={exportPortfolio} deletePortfolio={deletePortfolio} selectedPortfolioId={selectedPortfolioId} portfolioName={activePortfolio.name} canDeletePortfolio={portfolios.length > 1} openDataSources={()=>navigate('Settings')}/>}
       {active === 'Calendar' && <CalendarScreen portfolio={portfolio} navigate={navigate}/>}

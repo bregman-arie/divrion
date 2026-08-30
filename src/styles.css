@@ -133,3 +133,13 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 
 .ai-enrichment { margin-top:18px; border-color:#554876; background:linear-gradient(115deg,#29253a,#25262e); }.ai-enrichment-note { max-width:650px; margin:15px 0 18px; color:#c3bfd2; font-size:13px; line-height:1.55; }.ai-review-list { display:grid; gap:8px; margin-top:18px; }.ai-review-list article { display:grid; grid-template-columns:1fr auto; gap:6px 16px; padding:12px; border:1px solid #454253; border-radius:8px; background:#202129; }.ai-review-list article>div { display:grid; gap:3px; }.ai-review-list b { font-size:14px; }.ai-review-list span,.ai-review-list p { color:#bebdc7; font-size:12px; }.ai-review-list p { grid-column:1/-1; margin:2px 0 0; line-height:1.45; }.ai-review-list article>div:last-of-type { justify-items:end; }.ai-review-list a { color:#c8f278; font-size:12px; font-weight:800; }.ai-review-list small { color:#999aa4; font-size:12px; }.ai-confidence { padding:3px 6px; border-radius:4px; color:#d7d4e7; background:#3c3a4b; font-size:10px; font-style:normal; font-weight:800; text-transform:uppercase; }.ai-confidence.high { color:#d7f5ae; background:#304229; }.ai-confidence.medium { color:#ffe0a2; background:#493920; }.ai-confidence.low,.ai-confidence.unknown { color:#f6b7bf; background:#4a2d34; }.ai-review-actions { display:flex; gap:9px; margin-top:16px; }
 @media (max-width:760px) { .ai-review-list article { grid-template-columns:1fr; }.ai-review-list article>div:last-of-type { justify-items:start; }.ai-review-actions { flex-direction:column; }.ai-review-actions button { width:100%; } }
+.allocation-donut { position:relative; }
+.allocation-donut svg { position:absolute; inset:0; width:100%; height:100%; }
+.allocation-donut path { cursor:pointer; transition:filter .15s; }
+.allocation-donut path:hover { filter:brightness(1.18); }
+.allocation-donut>div { position:relative; z-index:1; }
+.import-modal { width:min(720px, 100%); }
+.import-assignment { grid-template-columns:minmax(130px,1fr) 155px 170px auto; }
+.import-remove { padding:7px 5px; color:#f29d9d; background:transparent; font-size:10px; font-weight:700; white-space:nowrap; }
+.import-remove:hover { color:#ffc1c6; }
+@media (max-width:760px) { .import-assignment { grid-template-columns:1fr 1fr; }.import-assignment>div { grid-column:1/-1; }.import-assignment .import-remove { justify-self:start; } }

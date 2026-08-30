@@ -47,7 +47,13 @@ const enrich = async holdings => {
       text: { format: { type: 'json_schema', name: 'portfolio_dividend_enrichment', strict: true, schema: enrichmentSchema } },
     }),
   });
-  if (!response.ok) throw new Error(`OpenAI enrichment failed (${response.status}).`);
+  if (!response.ok) {
+    const error = new Error(response.status === 429
+      ? 'AI research is temporarily rate-limited (429). This means the OpenAI request limit or available quota was reached. Wait a moment and try again; your portfolio data is unchanged.'
+      : `OpenAI enrichment failed (${response.status}).`);
+    error.status = response.status;
+    throw error;
+  }
   const result = await response.json();
   return JSON.parse(result.output_text || '{"updates":[]}');
 };
@@ -63,7 +69,7 @@ http.createServer(async (request, response) => {
         if (!Array.isArray(holdings) || !holdings.length) return sendJson(response, 400, { error: 'At least one holding is required.' });
         if (holdings.length > 50) return sendJson(response, 400, { error: 'Enrich up to 50 holdings at a time.' });
         sendJson(response, 200, await enrich(holdings));
-      } catch (error) { sendJson(response, 500, { error: error.message || 'Unable to enrich holdings.' }); }
+      } catch (error) { sendJson(response, error.status || 500, { error: error.message || 'Unable to enrich holdings.' }); }
     });
     return;
   }

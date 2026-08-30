@@ -26,6 +26,16 @@ npm run dev
 
 Vite will print the local address (normally `http://localhost:5173`). Open it in your browser.
 
+## Demo mode
+
+Divrion starts with an empty portfolio by default. To load the illustrative portfolios and sample income data, open the app with the `demo` query flag:
+
+```text
+http://localhost:5173/?demo
+```
+
+You can also enable this behavior at build time with `VITE_DEMO=true`.
+
 ## Other commands
 
 ```bash

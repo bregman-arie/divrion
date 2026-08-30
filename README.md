@@ -4,6 +4,26 @@
 
 Divrion is a responsive, dark-mode-first dashboard for planning dividend income, modelling a portfolio, discovering income investments, and seeing how much of your monthly life is already covered.
 
+## Product preview
+
+### Income overview
+
+![Divrion income overview](images/overview.jpg)
+
+Track passive income, expense coverage, allocation, activity, and your next goal in one focused view.
+
+### Portfolio modelling
+
+![Divrion portfolio](images/protfolio.jpg)
+
+Model holdings, distinguish simulated positions, and review the income impact of allocation changes.
+
+### What-if simulation
+
+![Divrion simulation](images/simulation.jpg)
+
+Try an investment amount before acting and see how it changes expected income.
+
 ## What you can do
 
 | Workspace | Purpose |

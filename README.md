@@ -45,13 +45,13 @@ Divrion is designed around a transparent, free-first data model:
 
 - **Local calculations:** imports, goals, and simulations stay in the browser.
 - **Official-source foundation:** a future backend can enrich US dividend events from issuer announcements and SEC EDGAR filings, keeping the source and refresh timestamp visible.
-- **Optional personal provider:** users can connect their own Alpha Vantage API key or Alpaca API key ID and secret from **Data sources**. The credentials stay only in that browser and can refresh positions with a current price, dividend yield, calculated market value, and estimated annual income. Alpaca uses its cash-dividend corporate-action records to calculate trailing yield where available.
+- **Optional personal provider:** users can connect their own Alpha Vantage API key or Alpaca API key ID and secret from **Settings**. The credentials stay only in that browser and can refresh positions with a current price, dividend yield, calculated market value, and estimated annual income. Alpaca uses its cash-dividend corporate-action records to calculate trailing yield where available.
 
 Imports need `Shares` or `Quantity` for price-based valuation. Market-data refreshes are explicitly timestamped; future ex-dividend and payment dates should always be confirmed against the issuer announcement.
 
 ## Shareable views
 
-Every workspace has its own URL: `/`, `/income-plan`, `/portfolio`, `/discover`, and `/data-sources`. Browser back/forward navigation works between them. When a holding has no imported or provider-supplied dividend yield, Divrion marks it explicitly and links to the market-data connection instead of inventing a value.
+Every workspace has its own URL: `/`, `/income-plan`, `/portfolio`, `/discover`, and `/settings`. Browser back/forward navigation works between them. When a holding has no imported or provider-supplied dividend yield, Divrion marks it explicitly and links to the market-data connection instead of inventing a value.
 
 ## Quick start
 

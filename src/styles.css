@@ -52,5 +52,9 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 /* Keep metric values directly beneath the label in every repeated column. */
 .mini-stat { justify-items:center; text-align:center; }
 .rec-stats div { justify-items:center; text-align:center; }
-.holding-row > :nth-child(2),.holding-row > :nth-child(3),.holding-row > :nth-child(4) { justify-self:center; text-align:center; }
+.holding-row > :nth-child(2),.holding-row > :nth-child(3),.holding-row > :nth-child(4) { display:grid; width:100%; justify-self:stretch; place-items:center; text-align:center; }
+.holding-row.heading > :nth-child(2),.holding-row.heading > :nth-child(3),.holding-row.heading > :nth-child(4) { font-weight:inherit; }
 .holding-row .remove { justify-self:end; }
+.yield-callout { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-top:18px; padding:10px 12px; border:1px solid #514967; border-radius:8px; color:#bfbae1; background:#292637; font-size:10px; }.yield-callout button,.missing-yield { color:#d1c9ff; background:transparent; font-size:10px; font-weight:800; }.yield-callout button { white-space:nowrap; }.missing-yield { padding:4px 6px; border:1px dashed #726b9a; border-radius:5px; }
+.allocation-simulated { display:inline-block; margin-left:5px; padding:1px 4px; border:1px solid #62598d; border-radius:3px; color:#c9c1ff; background:#302d44; font:7px 'DM Mono'; letter-spacing:.35px; text-transform:uppercase; font-style:normal; vertical-align:1px; }
+@media (max-width: 760px) { .yield-callout { align-items:flex-start; flex-direction:column; gap:6px; }.holding-row > :nth-child(2) { place-items:center; }.holding-row>span:nth-child(3),.holding-row>strong,.holding-row.heading>span:nth-child(3),.holding-row.heading>span:nth-child(4) { display:none; } }

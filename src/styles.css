@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
 
 :root { font-family: 'DM Sans', sans-serif; color: #f2f1ed; background: #16171d; font-synthesis: none; }
 * { box-sizing: border-box; }
@@ -99,3 +99,6 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .income-onboarding-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }.income-onboarding-actions .ghost { color:#d7d1ff; border-color:#625b82; background:#313041; }
 .newcomer-panel { display:flex; justify-content:space-between; align-items:center; gap:28px; margin:0 0 18px; padding:27px 29px; border-color:#4e5f47; background:linear-gradient(115deg,#283129,#262832); }.newcomer-panel h2 { margin-bottom:8px; }.newcomer-panel p:last-child { max-width:620px; margin:0; color:#c0c8bb; font-size:14px; line-height:1.55; }.newcomer-actions { display:flex; flex:none; flex-wrap:wrap; justify-content:flex-end; gap:9px; max-width:350px; }.onboarding-target,.onboarding-data { padding:10px 12px; border-radius:7px; font-size:10px; font-weight:800; }.onboarding-target { color:#e4dcff; border:1px solid #756aa8; background:#3a3557; }.onboarding-target:hover { background:#494167; }.onboarding-data { color:#bcebd1; border:1px solid #4c866d; background:#263e35; }.onboarding-data:hover { background:#2e4e42; }
 @media (max-width: 760px) { .income-onboarding-actions,.newcomer-actions { align-items:stretch; flex-direction:column; }.income-onboarding-actions button,.newcomer-actions button { width:100%; }.newcomer-panel { align-items:stretch; flex-direction:column; gap:18px; }.newcomer-actions { max-width:none; } }
+
+/* Use one refined sans-serif throughout; dense mono labels felt too mechanical. */
+.app-shell,.app-shell * { font-family:'DM Sans',sans-serif !important; }

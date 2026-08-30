@@ -19,6 +19,13 @@ const defaultExpenses = [
   { id: 'life', label: 'Living & food', amount: 650 },
   { id: 'transport', label: 'Transport', amount: 400 },
 ];
+const defaultPortfolios = [
+  { id: 'income-core', name: 'Income Core', holdings },
+  { id: 'growth-income', name: 'Growth & Income', holdings: [
+    { symbol: 'VIG', name: 'Vanguard Dividend Appreciation', value: 9200, yield: 1.7, income: 156.4, color: '#7a67fa' },
+    { symbol: 'XLV', name: 'Health Care Select Sector', value: 5400, yield: 1.4, income: 75.6, color: '#43c6a1' },
+  ] },
+];
 
 function DiscoverCards({ filter, setFilter, addHolding, full = false }) {
   const [minimumYield, setMinimumYield] = useState(0);
@@ -31,7 +38,7 @@ function PortfolioScreen({ portfolio, totalValue, annualIncome, overallYield, re
   const [investmentAmount, setInvestmentAmount] = useState(1000);
   const lowestYield = portfolio.length ? portfolio.reduce((lowest, item) => item.yield < lowest.yield ? item : lowest) : null;
   const suggested = recommendations.find(item => item.symbol === 'JEPI');
-  return <div className="screen-stack"><section className="stats-grid">{[['Portfolio value', `$${totalValue.toLocaleString()}`], ['Annual income', `$${annualIncome.toFixed(0)}`], ['Blended yield', `${overallYield.toFixed(2)}%`], ['Holdings', portfolio.length]].map(([label,value])=><div className="mini-stat" key={label}><span>{label}</span><b>{value}</b></div>)}</section><section className="panel holdings-panel"><div className="panel-heading"><div><h2>Income portfolio</h2><p>Model how each holding changes your income engine</p></div><div className="portfolio-actions"><button className="ghost" onClick={exportPortfolio}>Export CSV</button><button className="primary" onClick={openHoldingForm}><Plus size={16}/>Add holding</button></div></div><div className="holdings-table">{portfolio.length ? <><div className="holding-row heading"><span>Investment</span><span>Market value</span><span>Yield</span><span>Annual income</span><span/></div>{portfolio.map(h=><div className="holding-row" key={h.symbol}><div className="investment"><div className="ticker" style={{background:h.color}}>{h.symbol.slice(0,2)}</div><span><b>{h.symbol}{h.simulated && <i className="simulated-badge">Simulated</i>}</b><em>{h.name}</em></span></div><span>${h.value.toLocaleString()}</span><span>{h.yield}%</span><strong>${h.income.toFixed(0)}</strong><button className="remove" onClick={()=>removeHolding(h.symbol)}>Remove</button></div>)}</> : <div className="empty-state"><div>＋</div><h3>Your simulation is ready for its first holding.</h3><p>Add an ETF or stock manually, or restore the sample portfolio to explore income impact.</p><span><button className="primary" onClick={openHoldingForm}>Add holding</button><button className="ghost" onClick={resetPortfolio}>Restore sample</button></span></div>}</div></section><section className="panel tuneup-panel"><div className="panel-heading"><div><p className="eyebrow">PORTFOLIO TUNE-UP</p><h2>Use your next investment intentionally.</h2></div><label className="amount-input">Investment amount <div className="input-prefix"><span>$</span><input type="number" min="0" value={investmentAmount} onChange={event=>setInvestmentAmount(Number(event.target.value))}/></div></label></div><div className="tuneup-grid"><div><span className="tuneup-label">Consider adding</span><h3>{suggested.symbol}</h3><p>${investmentAmount.toLocaleString()} at {suggested.yield} could add about <strong>${(investmentAmount * Number.parseFloat(suggested.yield) / 100).toFixed(0)}/yr</strong> in estimated income.</p><span className="tag">Higher yield</span><button className="simulate-button" onClick={()=>simulateSuggested(investmentAmount)}>Simulate ${investmentAmount.toLocaleString()} in {suggested.symbol}</button></div><div><span className="tuneup-label">Review exposure</span><h3>{lowestYield ? lowestYield.symbol : '—'}</h3><p>{lowestYield ? `${lowestYield.symbol} has the lowest current yield (${lowestYield.yield}%). Compare its role before adding more capital.` : 'Add holdings to receive portfolio-specific observations.'}</p><span className="tag subtle">Portfolio balance</span></div></div><p className="advice-note">Illustrative portfolio observations, not investment advice.</p></section></div>
+  return <div className="screen-stack"><section className="stats-grid">{[['Portfolio value', `$${totalValue.toLocaleString()}`], ['Annual income', `$${annualIncome.toFixed(0)}`], ['Blended yield', `${overallYield.toFixed(2)}%`], ['Holdings', portfolio.length]].map(([label,value])=><div className="mini-stat" key={label}><span>{label}</span><b>{value}</b></div>)}</section><section className="panel holdings-panel"><div className="panel-heading"><div><h2>Income portfolio</h2><p>Model how each holding changes your income engine</p></div><div className="portfolio-actions"><button className="ghost" onClick={exportPortfolio}>Export CSV</button><button className="primary" onClick={openHoldingForm}><Plus size={16}/>Add holding</button></div></div><div className="holdings-table">{portfolio.length ? <><div className="holding-row heading"><span>Investment</span><span>Market value</span><span>Yield</span><span>Annual income</span><span/></div>{portfolio.map(h=><div className="holding-row" key={`${h.portfolioId}-${h.symbol}`}><div className="investment"><div className="ticker" style={{background:h.color}}>{h.symbol.slice(0,2)}</div><span><b>{h.symbol}{h.simulated && <i className="simulated-badge">Simulated</i>}</b><em>{h.name}{h.portfolioName && ` · ${h.portfolioName}`}</em></span></div><span>${h.value.toLocaleString()}</span><span>{h.yield}%</span><strong>${h.income.toFixed(0)}</strong><button className="remove" onClick={()=>removeHolding(h.symbol, h.portfolioId)}>Remove</button></div>)}</> : <div className="empty-state"><div>＋</div><h3>Your simulation is ready for its first holding.</h3><p>Add an ETF or stock manually, or restore the sample portfolio to explore income impact.</p><span><button className="primary" onClick={openHoldingForm}>Add holding</button><button className="ghost" onClick={resetPortfolio}>Restore sample</button></span></div>}</div></section><section className="panel tuneup-panel"><div className="panel-heading"><div><p className="eyebrow">PORTFOLIO TUNE-UP</p><h2>Use your next investment intentionally.</h2></div><label className="amount-input">Investment amount <div className="input-prefix"><span>$</span><input type="number" min="0" value={investmentAmount} onChange={event=>setInvestmentAmount(Number(event.target.value))}/></div></label></div><div className="tuneup-grid"><div><span className="tuneup-label">Consider adding</span><h3>{suggested.symbol}</h3><p>${investmentAmount.toLocaleString()} at {suggested.yield} could add about <strong>${(investmentAmount * Number.parseFloat(suggested.yield) / 100).toFixed(0)}/yr</strong> in estimated income.</p><span className="tag">Higher yield</span><button className="simulate-button" onClick={()=>simulateSuggested(investmentAmount)}>Simulate ${investmentAmount.toLocaleString()} in {suggested.symbol}</button></div><div><span className="tuneup-label">Review exposure</span><h3>{lowestYield ? lowestYield.symbol : '—'}</h3><p>{lowestYield ? `${lowestYield.symbol} has the lowest current yield (${lowestYield.yield}%). Compare its role before adding more capital.` : 'Add holdings to receive portfolio-specific observations.'}</p><span className="tag subtle">Portfolio balance</span></div></div><p className="advice-note">Illustrative portfolio observations, not investment advice.</p></section></div>
 }
 
 function HoldingModal({ onClose, onSave }) {
@@ -63,11 +70,14 @@ function App() {
   const [risk, setRisk] = useState(savedPlan.risk || 'Balanced');
   const [filter, setFilter] = useState('All');
   const [showPlanner, setShowPlanner] = useState(false);
-  const [portfolio, setPortfolio] = useState(() => { try { return JSON.parse(localStorage.getItem('divrion-portfolio')) || holdings; } catch { return holdings; } });
+  const [portfolios, setPortfolios] = useState(() => { try { const saved = JSON.parse(localStorage.getItem('divrion-portfolios')); if (saved) return saved; const legacy = JSON.parse(localStorage.getItem('divrion-portfolio')); return legacy ? [{ id: 'my-portfolio', name: 'My Portfolio', holdings: legacy }] : defaultPortfolios; } catch { return defaultPortfolios; } });
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState('combined');
   const [expenseItems, setExpenseItems] = useState(savedPlan.expenseItems || defaultExpenses);
   const [showHoldingForm, setShowHoldingForm] = useState(false);
   const [toast, setToast] = useState('');
   const [incomeCadence, setIncomeCadence] = useState('Monthly');
+  const activePortfolio = portfolios.find(item => item.id === selectedPortfolioId) || portfolios[0];
+  const portfolio = selectedPortfolioId === 'combined' ? portfolios.flatMap(group => group.holdings.map(holding => ({ ...holding, portfolioId: group.id, portfolioName: group.name }))) : (activePortfolio?.holdings || []).map(holding => ({ ...holding, portfolioId: activePortfolio.id, portfolioName: activePortfolio.name }));
   const totalValue = portfolio.reduce((sum, item) => sum + item.value, 0);
   const annualIncome = portfolio.reduce((sum, item) => sum + item.income, 0);
   const monthlyIncome = annualIncome / 12;
@@ -89,27 +99,35 @@ function App() {
   const goalDate = new Date();
   goalDate.setMonth(goalDate.getMonth() + monthsToGoal);
   const goalDateLabel = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(goalDate);
-  useEffect(() => localStorage.setItem('divrion-portfolio', JSON.stringify(portfolio)), [portfolio]);
+  useEffect(() => localStorage.setItem('divrion-portfolios', JSON.stringify(portfolios)), [portfolios]);
   useEffect(() => localStorage.setItem('divrion-plan', JSON.stringify({ goal, monthly, risk, expenseItems })), [goal, monthly, risk, expenseItems]);
   useEffect(() => { if (!toast) return undefined; const timer = setTimeout(() => setToast(''), 2800); return () => clearTimeout(timer); }, [toast]);
-  const removeHolding = symbol => setPortfolio(p => { setToast(`${symbol} removed from your simulation`); return p.filter(h => h.symbol !== symbol); });
-  const addHolding = holding => setPortfolio(p => { if (p.some(h => h.symbol === holding.symbol)) { setToast(`${holding.symbol} is already in your simulation`); return p; } setToast(`${holding.symbol} added to your simulation`); return [...p, { ...holding, income: holding.value * holding.yield / 100, color: holding.color || '#ef789a', simulated: true }]; });
+  const removeHolding = (symbol, sourceId) => setPortfolios(current => current.map(group => group.id !== (sourceId || activePortfolio.id) ? group : { ...group, holdings: group.holdings.filter(holding => holding.symbol !== symbol) }));
+  const removeHoldingWithToast = (symbol, sourceId) => { removeHolding(symbol, sourceId); setToast(`${symbol} removed from your simulation`); };
+  const addHolding = holding => setPortfolios(current => current.map(group => { if (group.id !== activePortfolio.id) return group; if (group.holdings.some(item => item.symbol === holding.symbol)) { setToast(`${holding.symbol} is already in ${group.name}`); return group; } setToast(`${holding.symbol} added to ${group.name}`); return { ...group, holdings: [...group.holdings, { ...holding, income: holding.value * holding.yield / 100, color: holding.color || '#ef789a', simulated: true }] }; }));
   const addRecommendation = r => addHolding({ symbol: r.symbol, name: r.name, value: 2500, yield: Number.parseFloat(r.yield), color: r.color });
   const simulateSuggested = amount => {
     const value = Number(amount) || 0;
     if (value <= 0) return setToast('Enter an investment amount above $0');
     const suggestion = recommendations.find(item => item.symbol === 'JEPI');
-    setPortfolio(current => {
-      const existing = current.find(item => item.symbol === suggestion.symbol);
-      if (existing) return current.map(item => item.symbol === suggestion.symbol ? { ...item, value: item.value + value, income: item.income + value * Number.parseFloat(suggestion.yield) / 100, simulated: true } : item);
-      return [...current, { symbol: suggestion.symbol, name: suggestion.name, value, yield: Number.parseFloat(suggestion.yield), income: value * Number.parseFloat(suggestion.yield) / 100, color: suggestion.color, simulated: true }];
-    });
+    setPortfolios(current => current.map(group => {
+      if (group.id !== activePortfolio.id) return group;
+      const existing = group.holdings.find(item => item.symbol === suggestion.symbol);
+      return { ...group, holdings: existing ? group.holdings.map(item => item.symbol === suggestion.symbol ? { ...item, value: item.value + value, income: item.income + value * Number.parseFloat(suggestion.yield) / 100, simulated: true } : item) : [...group.holdings, { symbol: suggestion.symbol, name: suggestion.name, value, yield: Number.parseFloat(suggestion.yield), income: value * Number.parseFloat(suggestion.yield) / 100, color: suggestion.color, simulated: true }] };
+    }));
     setToast(`$${value.toLocaleString()} simulated in JEPI`);
   };
-  const resetPortfolio = () => { setPortfolio(holdings); setToast('Sample portfolio restored'); };
+  const resetPortfolio = () => { setPortfolios(current => current.map(group => group.id === activePortfolio.id ? { ...group, holdings } : group)); setToast(`${activePortfolio.name} restored`); };
+  const createPortfolio = () => {
+    const id = crypto.randomUUID();
+    const name = `Portfolio ${portfolios.length + 1}`;
+    setPortfolios(current => [...current, { id, name, holdings: [] }]);
+    setSelectedPortfolioId(id);
+    setToast(`${name} created`);
+  };
   const exportPortfolio = () => {
     const quote = value => `"${String(value).replaceAll('"', '""')}"`;
-    const csv = [['Symbol', 'Name', 'Market value', 'Annual yield', 'Annual income', 'Simulated'], ...portfolio.map(item => [item.symbol, item.name, item.value, `${item.yield}%`, item.income.toFixed(2), item.simulated ? 'Yes' : 'No'])].map(row => row.map(quote).join(',')).join('\n');
+    const csv = [['Portfolio', 'Symbol', 'Name', 'Market value', 'Annual yield', 'Annual income', 'Simulated'], ...portfolio.map(item => [item.portfolioName, item.symbol, item.name, item.value, `${item.yield}%`, item.income.toFixed(2), item.simulated ? 'Yes' : 'No'])].map(row => row.map(quote).join(',')).join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url; link.download = 'divrion-portfolio.csv'; link.click(); URL.revokeObjectURL(url);
@@ -125,7 +143,7 @@ function App() {
       <div className="sidebar-bottom"><button className="nav-item"><Settings size={19}/>Settings</button><div className="profile"><div className="avatar">G</div><div><strong>Guest</strong><span>Local session</span></div><ChevronDown size={16}/></div></div>
     </aside>
     <main>
-      <header><div><p className="eyebrow">{active === 'Overview' ? 'WELCOME, GUEST' : active.toUpperCase()}</p><h1>{active === 'Overview' ? 'Your income, at a glance.' : active}</h1></div><div className="header-actions"><button className="icon-button"><CircleHelp size={20}/></button><button className="icon-button notification"><Bell size={20}/><i/></button><button className="primary" onClick={() => setShowPlanner(true)}><Plus size={18}/>Build income plan</button></div></header>
+      <header><div><p className="eyebrow">{active === 'Overview' ? 'WELCOME, GUEST' : active.toUpperCase()}</p><h1>{active === 'Overview' ? 'Your income, at a glance.' : active}</h1></div><div className="header-actions"><label className="portfolio-switcher"><span>Portfolio</span><select value={selectedPortfolioId} onChange={event=>setSelectedPortfolioId(event.target.value)}><option value="combined">Combined</option>{portfolios.map(group=><option key={group.id} value={group.id}>{group.name}</option>)}</select></label><button className="icon-button" title="Create portfolio" onClick={createPortfolio}><Plus size={18}/></button><button className="icon-button"><CircleHelp size={20}/></button><button className="icon-button notification"><Bell size={20}/><i/></button><button className="primary" onClick={() => setShowPlanner(true)}><Plus size={18}/>Build income plan</button></div></header>
       {active === 'Overview' && <><section className="hero-grid">
         <div className="income-card"><div className="income-card-header"><div className="card-label">{incomeCadence.toUpperCase()} PASSIVE INCOME <CircleHelp size={15}/></div><select aria-label="Income timeframe" value={incomeCadence} onChange={event=>setIncomeCadence(event.target.value)}>{['Monthly','Weekly','Daily','Yearly'].map(period=><option key={period}>{period}</option>)}</select></div><div className="income-top"><div><div className="big-number">${incomeView.income.toFixed(0)}<small>/{incomeView.suffix}</small></div><p><span className="up">↑ 4.8%</span> vs. last period</p></div><div className="spark"><svg viewBox="0 0 130 55" preserveAspectRatio="none"><path d="M0 45 C12 38 18 43 28 31 S45 36 55 26 S69 33 78 19 S95 24 105 12 S118 19 130 3" fill="none" stroke="currentColor" strokeWidth="3"/></svg></div></div><div className="goal-line"><span>{incomeCadence} goal</span><strong>${incomeView.goal.toLocaleString(undefined, { maximumFractionDigits: 0 })} /{incomeView.suffix}</strong></div><div className="progress"><span style={{width: `${goalProgress}%`}}/></div><p className="muted">You’re {goalProgress.toFixed(0)}% of the way there. Keep building.</p></div>
         <div className="coverage-card"><div className="card-label">EXPENSE COVERAGE</div><div className="coverage-body"><div className="donut" style={{'--percent': `${coverage * 3.6}deg`}}><div><b>{coverage}%</b><span>covered</span></div></div><div><h3>${monthlyIncome.toFixed(0)} <span>of ${expenses.toLocaleString()}</span></h3><p>Your portfolio covers {coverage}% of monthly spending.</p><button className="text-button" onClick={() => setActive('Income plan')}>View expenses →</button></div></div></div>
@@ -137,7 +155,7 @@ function App() {
       <DiscoverCards filter={filter} setFilter={setFilter} addHolding={addRecommendation}/>
       <section className="panel goal-panel"><div><p className="eyebrow">YOUR INCOME GOAL</p><h2>Reach ${goal.toLocaleString()} in monthly income</h2><p>At your current contribution and return assumptions, you could get there by <strong>{goalDateLabel}</strong> — about {Math.ceil(monthsToGoal / 12)} years.</p></div><button className="primary" onClick={()=>setShowPlanner(true)}>Explore plan <TrendingUp size={17}/></button></section>
       </>}
-      {active === 'Portfolio' && <PortfolioScreen portfolio={portfolio} totalValue={totalValue} annualIncome={annualIncome} overallYield={overallYield} removeHolding={removeHolding} openHoldingForm={()=>setShowHoldingForm(true)} resetPortfolio={resetPortfolio} simulateSuggested={simulateSuggested} exportPortfolio={exportPortfolio}/>} 
+      {active === 'Portfolio' && <PortfolioScreen portfolio={portfolio} totalValue={totalValue} annualIncome={annualIncome} overallYield={overallYield} removeHolding={removeHoldingWithToast} openHoldingForm={()=>setShowHoldingForm(true)} resetPortfolio={resetPortfolio} simulateSuggested={simulateSuggested} exportPortfolio={exportPortfolio}/>} 
       {active === 'Income plan' && <IncomePlanScreen goal={goal} setGoal={setGoal} monthly={monthly} setMonthly={setMonthly} risk={risk} setRisk={setRisk} expenses={expenses} expenseItems={expenseItems} setExpenseItems={setExpenseItems} coverage={coverage} monthlyIncome={monthlyIncome}/>} 
       {active === 'Discover' && <DiscoverCards filter={filter} setFilter={setFilter} addHolding={addRecommendation} full/>} 
     </main>

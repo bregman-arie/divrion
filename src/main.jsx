@@ -45,7 +45,8 @@ const parseImportedFile = (text, filename) => {
       const symbol = String(record.Ticker || '').toUpperCase(); if (!symbol) return items;
       const quantity = numberValue(record['Quantity (Adjusted)']);
       const cost = numberValue(record['Cost Per Share (Adjusted)']);
-      items[symbol] ||= { symbol, name: symbol, value: 0, yield: 0, income: 0, color: '#6e5af7', simulated: false };
+      items[symbol] ||= { symbol, name: symbol, quantity: 0, value: 0, yield: 0, income: 0, color: '#6e5af7', simulated: false };
+      items[symbol].quantity += quantity;
       items[symbol].value += quantity * cost;
       return items;
     }, {}));
@@ -97,6 +98,13 @@ function ImportModal({ onClose, onImport }) {
   return <div className="modal-backdrop"><div className="modal import-modal"><button className="close" onClick={onClose}><X/></button><p className="eyebrow">IMPORT PORTFOLIO DATA</p><h2>Bring your holdings into Divrion</h2><p className="modal-intro">Upload CSV or JSON from a broker, spreadsheet, or another tracker. Recognized fields include Symbol/Ticker, Name, Market Value, Yield, Income, Portfolio, and Account.</p><label className="file-picker"><FileUp size={19}/><span>Choose a CSV or JSON file</span><input type="file" accept=".csv,.json,text/csv,application/json" onChange={loadFile}/></label>{error && <p className="import-error">{error}</p>}{preview.length > 0 && <div className="import-preview"><span>Ready to import</span><b>{count} holding{count === 1 ? '' : 's'} across {preview.length} portfolio{preview.length === 1 ? '' : 's'}</b><div>{preview.map(group => <p key={group.name}><strong>{group.name}</strong><span>{group.holdings.map(item => item.symbol).join(', ')}</span></p>)}</div>{preview[0].note && <small>{preview[0].note}</small>}</div>}<button className="primary full" disabled={!preview.length} onClick={()=>{ onImport(preview); onClose(); }}>Import {count || ''} holdings</button></div></div>
 }
 
+function DataSourcesScreen({ config, saveConfig, refreshMarketData, refreshing, selectedName, holdingsWithQuantity }) {
+  const [key, setKey] = useState(config.apiKey || '');
+  const [saved, setSaved] = useState(false);
+  const save = () => { saveConfig({ provider: 'alpha-vantage', apiKey: key.trim() }); setSaved(true); };
+  return <div className="screen-stack"><section className="panel source-hero"><p className="eyebrow">YOUR DATA, YOUR KEY</p><h2>Connect a market-data provider.</h2><p>Provider credentials stay only in this browser. Divrion never sends them to another user or stores them in the repository.</p></section><section className="source-layout"><div className="panel source-config"><div className="panel-heading"><div><h2>Market-data connection</h2><p>Use your own provider subscription for live enrichment.</p></div><span className={config.apiKey ? 'connection-status connected' : 'connection-status'}>{config.apiKey ? 'Configured' : 'Not connected'}</span></div><label>Provider<select value="alpha-vantage" disabled><option>Alpha Vantage</option></select></label><p className="field-help">Prices, dividend yield, and declared dividend history. Your provider plan determines coverage and refresh limits.</p><label>API key<input type="password" placeholder="Paste your Alpha Vantage API key" value={key} onChange={event=>{setKey(event.target.value);setSaved(false);}}/></label><button className="primary" onClick={save} disabled={!key.trim()}>{saved ? 'Saved locally' : 'Save connection'}</button><p className="field-help">The key is saved in this browser’s local storage. Use a key dedicated to Divrion.</p></div><div className="panel refresh-panel"><p className="eyebrow">MARKET REFRESH</p><h2>Refresh {selectedName}</h2><p>{holdingsWithQuantity} holding{holdingsWithQuantity === 1 ? '' : 's'} with imported share quantities can be enriched with current price and dividend yield.</p><button className="primary full" disabled={!config.apiKey || !holdingsWithQuantity || refreshing} onClick={refreshMarketData}>{refreshing ? 'Refreshing market data…' : 'Refresh market data'}</button><p className="source-note">Values are sourced from your connected provider and retain the most recent refresh time.</p></div></section><section className="panel source-support"><h2>Provider coverage</h2><div><span>✓</span><p><strong>Current market value</strong> uses imported share quantity × provider price.</p></div><div><span>✓</span><p><strong>Dividend yield and annual income</strong> update when the provider returns dividend yield.</p></div><div><span>i</span><p><strong>Future ex/pay dates</strong> depend on the provider’s declared dividend coverage and should be treated as estimates until confirmed.</p></div></section></div>
+}
+
 function IncomePlanScreen({ goal, setGoal, monthly, setMonthly, risk, setRisk, expenses, expenseItems, setExpenseItems, coverage, monthlyIncome }) {
   const [cadence, setCadence] = useState('Monthly');
   const [sectors, setSectors] = useState(['Healthcare', 'Financials']);
@@ -126,6 +134,8 @@ function App() {
   const [showImport, setShowImport] = useState(false);
   const [toast, setToast] = useState('');
   const [incomeCadence, setIncomeCadence] = useState('Monthly');
+  const [dataSourceConfig, setDataSourceConfig] = useState(() => { try { return JSON.parse(localStorage.getItem('divrion-data-source')) || { provider: 'alpha-vantage', apiKey: '' }; } catch { return { provider: 'alpha-vantage', apiKey: '' }; } });
+  const [refreshing, setRefreshing] = useState(false);
   const activePortfolio = portfolios.find(item => item.id === selectedPortfolioId) || portfolios[0];
   const portfolio = selectedPortfolioId === 'combined' ? portfolios.flatMap(group => group.holdings.map(holding => ({ ...holding, portfolioId: group.id, portfolioName: group.name }))) : (activePortfolio?.holdings || []).map(holding => ({ ...holding, portfolioId: activePortfolio.id, portfolioName: activePortfolio.name }));
   const totalValue = portfolio.reduce((sum, item) => sum + item.value, 0);
@@ -151,6 +161,7 @@ function App() {
   const goalDateLabel = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(goalDate);
   useEffect(() => { if (!demoMode) localStorage.setItem('divrion-portfolios', JSON.stringify(portfolios)); }, [portfolios]);
   useEffect(() => localStorage.setItem('divrion-plan', JSON.stringify({ goal, monthly, risk, expenseItems })), [goal, monthly, risk, expenseItems]);
+  useEffect(() => localStorage.setItem('divrion-data-source', JSON.stringify(dataSourceConfig)), [dataSourceConfig]);
   useEffect(() => { if (!toast) return undefined; const timer = setTimeout(() => setToast(''), 2800); return () => clearTimeout(timer); }, [toast]);
   const removeHolding = (symbol, sourceId) => setPortfolios(current => current.map(group => group.id !== (sourceId || activePortfolio.id) ? group : { ...group, holdings: group.holdings.filter(holding => holding.symbol !== symbol) }));
   const removeHoldingWithToast = (symbol, sourceId) => { removeHolding(symbol, sourceId); setToast(`${symbol} removed from your simulation`); };
@@ -186,6 +197,26 @@ function App() {
     setSelectedPortfolioId('combined');
     setToast(`${groups.length} portfolio${groups.length === 1 ? '' : 's'} imported`);
   };
+  const refreshMarketData = async () => {
+    const holdings = portfolio.filter(item => Number(item.quantity) > 0);
+    if (!holdings.length || !dataSourceConfig.apiKey) return;
+    setRefreshing(true);
+    try {
+      const updates = await Promise.all(holdings.map(async holding => {
+        const request = fn => fetch(`https://www.alphavantage.co/query?${new URLSearchParams({ function: fn, symbol: holding.symbol, apikey: dataSourceConfig.apiKey })}`).then(response => response.json());
+        const [quote, overview] = await Promise.all([request('GLOBAL_QUOTE'), request('OVERVIEW')]);
+        const price = Number(quote['Global Quote']?.['05. price']);
+        if (!price) return null;
+        const rawYield = Number(overview.DividendYield);
+        const yieldValue = rawYield ? (rawYield <= 1 ? rawYield * 100 : rawYield) : holding.yield;
+        const value = Number(holding.quantity) * price;
+        return { symbol: holding.symbol, portfolioId: holding.portfolioId, price, value, yield: yieldValue, income: value * yieldValue / 100 };
+      }));
+      const usable = updates.filter(Boolean);
+      setPortfolios(current => current.map(group => ({ ...group, holdings: group.holdings.map(holding => { const update = usable.find(item => item.portfolioId === group.id && item.symbol === holding.symbol); return update ? { ...holding, value: update.value, yield: update.yield, income: update.income, lastPrice: update.price, lastUpdated: new Date().toISOString() } : holding; }) })));
+      setToast(`${usable.length} holding${usable.length === 1 ? '' : 's'} refreshed from Alpha Vantage`);
+    } catch { setToast('Market refresh failed. Check your API key and provider limits.'); } finally { setRefreshing(false); }
+  };
   const exportPortfolio = () => {
     const quote = value => `"${String(value).replaceAll('"', '""')}"`;
     const csv = [['Portfolio', 'Symbol', 'Name', 'Market value', 'Annual yield', 'Annual income', 'Simulated'], ...portfolio.map(item => [item.portfolioName, item.symbol, item.name, item.value, `${item.yield}%`, item.income.toFixed(2), item.simulated ? 'Yes' : 'No'])].map(row => row.map(quote).join(',')).join('\n');
@@ -201,7 +232,7 @@ function App() {
       <nav>
         {[['Overview', LayoutDashboard], ['Income plan', TrendingUp], ['Portfolio', Wallet], ['Discover', Compass]].map(([label, Icon]) => <button key={label} onClick={() => setActive(label)} className={active === label ? 'nav-item active' : 'nav-item'}><Icon size={19}/>{label}</button>)}
       </nav>
-      <div className="sidebar-bottom"><button className="nav-item"><Settings size={19}/>Settings</button><div className="profile"><div className="avatar">G</div><div><strong>Guest</strong><span>Local session</span></div><ChevronDown size={16}/></div></div>
+      <div className="sidebar-bottom"><button className={active === 'Data sources' ? 'nav-item active' : 'nav-item'} onClick={()=>setActive('Data sources')}><Settings size={19}/>Data sources</button><div className="profile"><div className="avatar">G</div><div><strong>Guest</strong><span>Local session</span></div><ChevronDown size={16}/></div></div>
     </aside>
     <main>
       <header><div><p className="eyebrow">{active === 'Overview' ? 'WELCOME, GUEST' : active.toUpperCase()}</p><h1>{active === 'Overview' ? 'Your income, at a glance.' : active}</h1></div><div className="header-actions"><label className="portfolio-switcher"><span>Portfolio</span><select value={selectedPortfolioId} onChange={event=>setSelectedPortfolioId(event.target.value)}><option value="combined">Combined</option>{portfolios.map(group=><option key={group.id} value={group.id}>{group.name}</option>)}</select></label><button className="icon-button" title="Create portfolio" onClick={createPortfolio}><Plus size={18}/></button><button className="icon-button"><CircleHelp size={20}/></button><button className="icon-button notification"><Bell size={20}/><i/></button><button className="primary" onClick={() => setShowPlanner(true)}><Plus size={18}/>Build income plan</button></div></header>
@@ -219,6 +250,7 @@ function App() {
       {active === 'Portfolio' && <PortfolioScreen portfolio={portfolio} totalValue={totalValue} annualIncome={annualIncome} overallYield={overallYield} removeHolding={removeHoldingWithToast} openHoldingForm={()=>setShowHoldingForm(true)} openImport={()=>setShowImport(true)} simulateSuggested={simulateSuggested} exportPortfolio={exportPortfolio} deletePortfolio={deletePortfolio} selectedPortfolioId={selectedPortfolioId} portfolioName={activePortfolio.name} canDeletePortfolio={portfolios.length > 1}/>} 
       {active === 'Income plan' && <IncomePlanScreen goal={goal} setGoal={setGoal} monthly={monthly} setMonthly={setMonthly} risk={risk} setRisk={setRisk} expenses={expenses} expenseItems={expenseItems} setExpenseItems={setExpenseItems} coverage={coverage} monthlyIncome={monthlyIncome}/>} 
       {active === 'Discover' && <DiscoverCards filter={filter} setFilter={setFilter} addHolding={addRecommendation} full/>} 
+      {active === 'Data sources' && <DataSourcesScreen config={dataSourceConfig} saveConfig={setDataSourceConfig} refreshMarketData={refreshMarketData} refreshing={refreshing} selectedName={selectedPortfolioId === 'combined' ? 'combined portfolios' : activePortfolio.name} holdingsWithQuantity={portfolio.filter(item => Number(item.quantity) > 0).length}/>} 
     </main>
     {showPlanner && <div className="modal-backdrop"><div className="modal"><button className="close" onClick={()=>setShowPlanner(false)}><X/></button><p className="eyebrow">INCOME PLAN</p><h2>Design your income engine</h2><p className="modal-intro">Tune the inputs and we’ll shape a portfolio path toward your goal.</p><label>Monthly passive-income goal <div className="input-prefix"><span>$</span><input type="number" value={goal} onChange={e=>setGoal(Number(e.target.value))}/><em>/ month</em></div></label><label>Monthly contribution <div className="input-prefix"><span>$</span><input type="number" value={monthly} onChange={e=>setMonthly(Number(e.target.value))}/><em>/ month</em></div></label><label>Risk preference <div className="risk-options">{['Conservative','Balanced','Growth'].map(x=><button key={x} className={risk===x?'selected':''} onClick={()=>setRisk(x)}>{x}</button>)}</div></label><div className="plan-result"><span>Suggested target yield</span><b>{risk==='Conservative'?'3.2%':risk==='Balanced'?'4.1%':'4.8%'}</b><span>Estimated time to goal</span><b>{risk==='Conservative'?'5 years':'3 years, 8 months'}</b></div><button className="primary full" onClick={()=>setShowPlanner(false)}>Save income plan</button></div></div>}
     {showHoldingForm && <HoldingModal onClose={()=>setShowHoldingForm(false)} onSave={holding=>{ addHolding(holding); setShowHoldingForm(false); }}/>} 

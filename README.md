@@ -37,6 +37,10 @@ Try an investment amount before acting and see how it changes expected income.
 
 From the Portfolio workspace, choose **Import** to upload a CSV or JSON export from a broker, spreadsheet, or another tracker. Divrion recognizes common field names such as `Symbol`/`Ticker`, `Name`, `Market Value`, `Yield`, `Annual Income`, `Portfolio`, and `Account`, then creates one or more imported portfolios automatically.
 
+## Bring-your-own market data
+
+Users can connect their own Alpha Vantage API key from **Data sources**. The key is stored only in that browser and can refresh imported positions with a current price, dividend yield, calculated market value, and estimated annual income. Imports need share quantities for market-value refreshes.
+
 ## Quick start
 
 **Prerequisites:** Node.js 20+ and npm.

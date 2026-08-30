@@ -48,3 +48,9 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 /* A single, highly legible typeface for all interface and display text. */
 .brand,.brand-mark,h1,h2,h3,.big-number,.donut b,.coverage-body h3,.allocation-donut strong,.rec h3,.mini-stat b,.plan-figure b,.coverage-summary b,.empty-state h3,.discover-empty h3 { font-family:'DM Sans',sans-serif !important; }
 .big-number,h1 { letter-spacing:-1.1px; }
+
+/* Keep metric values directly beneath the label in every repeated column. */
+.mini-stat { justify-items:center; text-align:center; }
+.rec-stats div { justify-items:center; text-align:center; }
+.holding-row > :nth-child(2),.holding-row > :nth-child(3),.holding-row > :nth-child(4) { justify-self:center; text-align:center; }
+.holding-row .remove { justify-self:end; }
